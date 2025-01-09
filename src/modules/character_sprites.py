@@ -39,7 +39,7 @@ class Player(Entity):
         Entity.__init__(self, screen)
 
         # show boxie image
-        self.image = pygame.image.load("src/art/character/boxie/default-51.png").convert_alpha()
+        self.image = pygame.image.load("src/art/character/boxie-white/default-51.png").convert_alpha()
         self.image = pygame.transform.scale(self.image, (39, 39))
 
         # lt the player choose their color, and use pygame's color blending to change the color of the player
@@ -338,7 +338,7 @@ class ShieldBubble(Entity):
         
         self.affectedByGravity = False
         self.gravity = 0
-        self.MaxHealth = 20
+        self.MaxHealth = 6
         self.Health = self.MaxHealth   
 
     def dealDamageToShield(self, damage):

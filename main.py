@@ -64,7 +64,7 @@ def main():
 
     players = pygame.sprite.Group()
     # create a player sprite object from our mySprites module
-    players.add(character_sprites.Player(screen, 100, 100, "mouse"))
+    players.add(character_sprites.Player(screen, 100, 100, "mouse", (186,225,255)))
 
     # add all sprites include the player, weapon, bullets, and map sprites to the allSprites group
     allSprites = pygame.sprite.OrderedUpdates(players, mapSprites)
@@ -100,8 +100,6 @@ def main():
                 # check if the players weapon is already in the allSprites group
                 if player.weapon not in allSprites:
                     allSprites.add(player.weapon)
-
-        
 
         # scan to see if a controller is detected and switch to controller if so 
         joystick_count = pygame.joystick.get_count()

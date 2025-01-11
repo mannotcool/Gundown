@@ -52,27 +52,34 @@ def main():
     # make background space.gif in art
     background = pygame.image.load("src/art/space.gif")
 
+    # change mouse cursor to a crosshair
+    pygame.mouse.set_visible(False)
+    crosshair = pygame.image.load("src/art/hud/cross/crosshair_320.png").convert_alpha()
+    # add transparency to the crosshair
+    crosshair.set_colorkey((0, 0, 0))
+    # scale down
+    crosshair = pygame.transform.scale(crosshair, (32, 32))
+
 
     screen.blit(background, (0,0))
 
     # create 4 walls that surround the screen
-    top_wall = character_sprites.StaticMapObject(screen, 0, 0, 1280, 10, (255, 255, 255))
-    left_wall = character_sprites.StaticMapObject(screen, 0, 0, 10, 720, (255, 255, 255))
-    right_wall = character_sprites.StaticMapObject(screen, 1270, 0, 10, 720, (255, 255, 255))
+    top_wall = character_sprites.StaticMapObject(screen, 0, 0, 1280, 10, (5, 1, 23, 255), 255)
+    left_wall = character_sprites.StaticMapObject(screen, -20, 0, 10, 720, (5, 1, 23, 50), 255)
+    right_wall = character_sprites.StaticMapObject(screen, 1280, 0, 10, 720, (5, 1, 23, 50), 255)
 
     # latching testing wall 
-    climable_wall = character_sprites.StaticMapObject(screen, 1260, 560, 10, 120, (200, 0, 200), "solid", True)
+    climable_wall = character_sprites.StaticMapObject(screen, 1260, 560, 10, 120, (200, 0, 200), 255, "solid", True)
 
     # extra platform
-    platform = character_sprites.StaticMapObject(screen, 500, 600, 300, 20, (255, 255, 255))
-
-    floor = character_sprites.StaticMapObject(screen, 0, 710, 1280, 10, (255, 255, 255))
+    platform = character_sprites.StaticMapObject(screen, 500, 600, 300, 20, (32, 4, 131), 100)
+    floor = character_sprites.StaticMapObject(screen, 0, 710, 1280, 10, (255, 255, 255, 30), 255)
 
     # add a small 1/3rd green wall that is just bouncing around
-    bounce_demo_wall = character_sprites.StaticMapObject(screen, 700, 10, 300, 10, (0, 255, 0), "bounce")
+    bounce_demo_wall = character_sprites.StaticMapObject(screen, 700, 10, 300, 10, (0, 255, 0), 255, "bounce")
 
     # add a box with physics
-    box = character_sprites.StaticMapObject(screen, 500, 500, 50, 50, (255, 0, 0), "solid", False, True, 2)
+    box = character_sprites.StaticMapObject(screen, 500, 200, 50, 50, (255, 0, 0), 255, "solid", False, True, 1)
 
     # create a sprite group for all physics objects
     physicsObjects = pygame.sprite.Group(box) 
@@ -108,6 +115,10 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 keepGoing = False
+
+        # make the mouse cursor the crosshair
+        
+
 
         # if the L button is pressed, add 1 more player for a max of 2 players
         if pygame.key.get_pressed()[pygame.K_l] and len(players) < 2:
@@ -241,8 +252,8 @@ def main():
 
 
         allSprites.update()              # Update all sprites
-        
         allSprites.draw(screen)          # Draw all sprites
+        screen.blit(crosshair, pygame.mouse.get_pos())
         pygame.display.flip()            # Flip the display
     
     # Close the game window

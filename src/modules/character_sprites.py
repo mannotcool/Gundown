@@ -78,7 +78,7 @@ class Player(Entity):
         self.lastTimeShieldBubble = 0
 
         # Define variable where the type is the pistol class
-        self.weapon = AssaultRifle(screen, self)
+        self.weapon = BasicPistol(screen, self)
 
     def displayGUI(self, screen):
         playerHealthBar = HealthBar(screen, self)
@@ -146,11 +146,20 @@ class Player(Entity):
                     if x < 0:
                         if sprite.latchable:
                             self.canLatch = True
-                        self.rect.left = sprite.rect.right
+                        # if the sprite is affected by physics, push the object and dont stop the collision
+                        if sprite.affectedByGravity:
+                            # use moveHorizontal to push the object from
+                            sprite.moveHorizontal(x, mapSprites)
+                        else:
+                            self.rect.left = sprite.rect.right
                     elif x > 0:
                         if sprite.latchable:
                             self.canLatch = True
-                        self.rect.right = sprite.rect.left
+
+                        if sprite.affectedByGravity:
+                            sprite.moveHorizontal(x, mapSprites)
+                        else:
+                            self.rect.right = sprite.rect.left
                 else:
                     self.canLatch = False
         elif x > 0:
@@ -161,11 +170,17 @@ class Player(Entity):
                     if x > 0:
                         if sprite.latchable:
                             self.canLatch = True
-                        self.rect.right = sprite.rect.left
+                        if sprite.affectedByGravity:
+                            sprite.moveHorizontal(x, mapSprites)
+                        else:
+                            self.rect.right = sprite.rect.left
                     elif x < 0:
                         if sprite.latchable:
                             self.canLatch = True
-                        self.rect.left = sprite.rect.right
+                        if sprite.affectedByGravity:
+                            sprite.moveHorizontal(x, mapSprites)
+                        else:
+                            self.rect.left = sprite.rect.right
                     else:
                         self.canLatch = False
         # center the player's x to the rect
@@ -384,53 +399,66 @@ class MapObject(pygame.sprite.Sprite):
     
 
 class StaticMapObject(MapObject):
-    def __init__(self, screen, x, y, width, height, color=(0, 0, 0), collisionType="solid", latchable=False, affectedByGravity=False, gravity=0):
+    def __init__(self, screen, x, y, width, height, color=(0, 0, 0), alpha=255, collisionType="solid", latchable=False, affectedByGravity=False, gravity=0):
         MapObject.__init__(self, screen)
         self.image = pygame.Surface((width, height))
         self.image = self.image.convert()
         self.image.fill(color)
+        self.image.set_alpha(alpha)
         self.rect = self.image.get_rect()
         self.rect.left = x
         self.rect.top = y
         self.hasCollision = True
         self.collisionRect = self.rect
-        self.collisionType = collisionType # solid, damage, bounce
+        self.collisionType = collisionType  # solid, damage, bounce
         self.collisionDamage = 0
         self.canBeDestroyed = False
         self.objectHealth = 0
         self.latchable = latchable
         self.affectedByGravity = affectedByGravity
         self.gravity = gravity
-    
+        self.verticalVelocity = 0  # Add vertical velocity for smooth falling
+
     def runtimeGravity(self, mapSprites):
         if self.affectedByGravity:
-            if self.gravity > 0:
-                print("test")
-                self.moveVertical(self.gravity, mapSprites)
-                if collisionCheck(self, mapSprites):
-                    self.gravity = 0.1
-                else:
-                    self.gravity += 1.0
+            # Simulate gravity by increasing vertical velocity
+            self.verticalVelocity += self.gravity  # Gravity acceleration
+            if self.verticalVelocity > 12:  # Cap the falling speed
+                self.verticalVelocity = 12
+
+            # Move object vertically
+            self.moveVertical(self.verticalVelocity, mapSprites)
 
     def moveVertical(self, y, mapSprites):
+        # Move vertically and check for collisions
         self.rect.top += y
         for sprite in mapSprites:
-            if pygame.sprite.collide_rect(self, sprite):
-                if y < 0:
-                    self.rect.top = sprite.rect.bottom
-                elif y > 0:
+            if sprite != self and pygame.sprite.collide_rect(self, sprite):
+                if y > 0:  # Falling down
                     self.rect.bottom = sprite.rect.top
+                    self.verticalVelocity = 0  # Stop falling
+                elif y < 0:  # Moving up
+                    self.rect.top = sprite.rect.bottom
+                    self.verticalVelocity = 0  # Stop upward motion
         self.y = self.rect.center[1]
 
     def moveHorizontal(self, x, mapSprites):
+        # use same logic as player to move horizontally, but ignore the player and latchable objects because the player can move map objects
         self.rect.left += x
         for sprite in mapSprites:
-            if pygame.sprite.collide_rect(self, sprite):
+            if sprite != self and pygame.sprite.collide_rect(self, sprite):
                 if x < 0:
-                    self.rect.left = sprite.rect.right
+                    if sprite.affectedByGravity:
+                        sprite.moveHorizontal(x, mapSprites)
+                    else:
+                        self.rect.left = sprite.rect.right
                 elif x > 0:
-                    self.rect.right = sprite.rect.left
+                    if sprite.affectedByGravity:
+                        sprite.moveHorizontal(x, mapSprites)
+                    else:
+                        self.rect.right = sprite.rect.left
         self.x = self.rect.center[0]
+
 
     def update(self):
         MapObject.update(self)
@@ -622,7 +650,7 @@ class BasicPistol(WeaponBase):
         self.weaponName = "Pistol"
 
         # load the weapon image
-        self.baseImage = pygame.image.load("src/art/weapons/pistol/b_pistol.png").convert_alpha()
+        self.baseImage = pygame.image.load("src/art/weapons/pistol/wo_pistol.png").convert_alpha()
         
         # scale it down
         self.baseImage = pygame.transform.scale(self.baseImage, (30, 30))

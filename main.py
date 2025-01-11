@@ -23,9 +23,19 @@ right bumper - 10
 axis 5 - right trigger
 axis 4 - left trigger
 
+
+pastel color palette:
+red: (255,179,186)
+orange: (255,223,186)
+yellow: (255,255,186)
+green: (186,255,201)
+blue: (186,225,255)
+purple: (227,218,255)
+
+
 """
 
-version = "0.3.1"
+version = "0.3.1.1"
 
 # enables text debug on screen
 debug = True
@@ -39,32 +49,40 @@ def main():
     pygame.display.set_caption("Gundown - " + version + " - Debug: " + str(debug))
     
     # E - Entities (just background for now)
-    background = pygame.Surface(screen.get_size())
-    background = background.convert()
-    background.fill((255, 255, 255))
+    # make background space.gif in art
+    background = pygame.image.load("src/art/space.gif")
+
+
     screen.blit(background, (0,0))
 
     # create 4 walls that surround the screen
-    top_wall = character_sprites.StaticMapObject(screen, 0, 0, 1280, 10)
-    left_wall = character_sprites.StaticMapObject(screen, 0, 0, 10, 720)
-    right_wall = character_sprites.StaticMapObject(screen, 1270, 0, 10, 720)
+    top_wall = character_sprites.StaticMapObject(screen, 0, 0, 1280, 10, (255, 255, 255))
+    left_wall = character_sprites.StaticMapObject(screen, 0, 0, 10, 720, (255, 255, 255))
+    right_wall = character_sprites.StaticMapObject(screen, 1270, 0, 10, 720, (255, 255, 255))
 
     # latching testing wall 
     climable_wall = character_sprites.StaticMapObject(screen, 1260, 560, 10, 120, (200, 0, 200), "solid", True)
 
     # extra platform
-    platform = character_sprites.StaticMapObject(screen, 500, 600, 300, 20)
+    platform = character_sprites.StaticMapObject(screen, 500, 600, 300, 20, (255, 255, 255))
 
-    floor = character_sprites.StaticMapObject(screen, 0, 710, 1280, 10)
+    floor = character_sprites.StaticMapObject(screen, 0, 710, 1280, 10, (255, 255, 255))
 
     # add a small 1/3rd green wall that is just bouncing around
     bounce_demo_wall = character_sprites.StaticMapObject(screen, 700, 10, 300, 10, (0, 255, 0), "bounce")
 
-    mapSprites = pygame.sprite.Group(top_wall, left_wall, floor, platform, right_wall, bounce_demo_wall, climable_wall)
+    # add a box with physics
+    box = character_sprites.StaticMapObject(screen, 500, 500, 50, 50, (255, 0, 0), "solid", False, True, 2)
+
+    # create a sprite group for all physics objects
+    physicsObjects = pygame.sprite.Group(box) 
+    mapSprites = pygame.sprite.Group(top_wall, left_wall, floor, platform, right_wall, bounce_demo_wall, climable_wall, physicsObjects)
 
     players = pygame.sprite.Group()
     # create a player sprite object from our mySprites module
-    players.add(character_sprites.Player(screen, 100, 100, "mouse", (186,225,255)))
+    players.add(character_sprites.Player(screen, 100, 100, "mouse", character_sprites.Colors.purple))
+
+
 
     # add all sprites include the player, weapon, bullets, and map sprites to the allSprites group
     allSprites = pygame.sprite.OrderedUpdates(players, mapSprites)
@@ -132,29 +150,29 @@ def main():
         
         if debug:
             # make it so its based on how many players there are and put it into list
-            p1Name = font.render("Player 1", True, (50, 0, 0))
-            p1AmmoText = font.render("Ammo: " + str(players.sprites()[0].weapon.ammo), True, (0, 0, 0))
-            p1TextX = font.render("Player X: " + str(players.sprites()[0].rect.x), True, (0, 0, 0))
-            p1TextY = font.render("Player Y: " + str(players.sprites()[0].rect.y), True, (0, 0, 0))
-            p1TextDirection = font.render("Direction: " + str(players.sprites()[0].direction), True, (0, 0, 0))
-            p1TextGunType = font.render("Gun Type: " + str(players.sprites()[0].weapon.weaponName), True, (0, 0, 0))
-            p1TextHealth = font.render("Health: " + str(players.sprites()[0].Health), True, (0, 0, 0))
-            p1TextIsReloading = font.render("Is Reloading: " + str(players.sprites()[0].weapon.isReloading), True, (0, 0, 0))
-            p1TextCanLatch = font.render("Can Latch: " + str(players.sprites()[0].canLatch), True, (0, 0, 0))
-            p1TextIsLatched = font.render("Is Latched: " + str(players.sprites()[0].latching), True, (0, 0, 0))
+            p1Name = font.render("Player 1", True, (150, 0, 0))
+            p1AmmoText = font.render("Ammo: " + str(players.sprites()[0].weapon.ammo), True, (255, 255, 255))
+            p1TextX = font.render("Player X: " + str(players.sprites()[0].rect.x), True, (255, 255, 255))
+            p1TextY = font.render("Player Y: " + str(players.sprites()[0].rect.y), True, (255, 255, 255))
+            p1TextDirection = font.render("Direction: " + str(players.sprites()[0].direction), True, (255, 255, 255))
+            p1TextGunType = font.render("Gun Type: " + str(players.sprites()[0].weapon.weaponName), True, (255, 255, 255))
+            p1TextHealth = font.render("Health: " + str(players.sprites()[0].Health), True, (255, 255, 255))
+            p1TextIsReloading = font.render("Is Reloading: " + str(players.sprites()[0].weapon.isReloading), True, (255, 255, 255))
+            p1TextCanLatch = font.render("Can Latch: " + str(players.sprites()[0].canLatch), True, (255, 255, 255))
+            p1TextIsLatched = font.render("Is Latched: " + str(players.sprites()[0].latching), True, (255, 255, 255))
 
             # if there is a second player, add the debug text for player 2
             if len(players) > 1:
-                p2Name = font.render("Player 2", True, (0, 0, 50))
-                p2AmmoText = font.render("Ammo: " + str(players.sprites()[1].weapon.ammo), True, (0, 0, 0))
-                p2TextX = font.render("Player X: " + str(players.sprites()[1].rect.x), True, (0, 0, 0))
-                p2TextY = font.render("Player Y: " + str(players.sprites()[1].rect.y), True, (0, 0, 0))
-                p2TextDirection = font.render("Direction: " + str(players.sprites()[1].direction), True, (0, 0, 0))
-                p2TextGunType = font.render("Gun Type: " + str(players.sprites()[1].weapon.weaponName), True, (0, 0, 0))
-                p2TextHealth = font.render("Health: " + str(players.sprites()[1].Health), True, (0, 0, 0))
-                p2TextIsReloading = font.render("Is Reloading: " + str(players.sprites()[1].weapon.isReloading), True, (0, 0, 0))
-                p2TextCanLatch = font.render("Can Latch: " + str(players.sprites()[1].canLatch), True, (0, 0, 0))
-                p2TextIsLatched = font.render("Is Latched: " + str(players.sprites()[1].latching), True, (0, 0, 0))
+                p2Name = font.render("Player 2", True, (0, 0, 150))
+                p2AmmoText = font.render("Ammo: " + str(players.sprites()[1].weapon.ammo), True, (255, 255, 255))
+                p2TextX = font.render("Player X: " + str(players.sprites()[1].rect.x), True, (255, 255, 255))
+                p2TextY = font.render("Player Y: " + str(players.sprites()[1].rect.y), True, (255, 255, 255))
+                p2TextDirection = font.render("Direction: " + str(players.sprites()[1].direction), True, (255, 255, 255))
+                p2TextGunType = font.render("Gun Type: " + str(players.sprites()[1].weapon.weaponName), True, (255, 255, 255))
+                p2TextHealth = font.render("Health: " + str(players.sprites()[1].Health), True, (255, 255, 255))
+                p2TextIsReloading = font.render("Is Reloading: " + str(players.sprites()[1].weapon.isReloading), True, (255, 255, 255))
+                p2TextCanLatch = font.render("Can Latch: " + str(players.sprites()[1].canLatch), True, (255, 255, 255))
+                p2TextIsLatched = font.render("Is Latched: " + str(players.sprites()[1].latching), True, (255, 255, 255))
                 
         
         # make bold green or red text depending on if control scheme is controller or mouse and give it a bit more space "Using Controller" "Using MnK"
@@ -166,6 +184,11 @@ def main():
             p1TextControlScheme = font.render("Using MnK", True, (255, 0, 0))
             if len(players) > 1:
                 p2TextControlScheme = font.render("Using MnK", True, (255, 0, 0))
+
+        # for every physics object, call their internal function: runtimeGravity
+        for physicsObject in physicsObjects:
+            physicsObject.runtimeGravity(mapSprites)
+
 
         for player in players:
             # check if player is dead

@@ -14,6 +14,14 @@ def collisionCheck(player, mapSprites):
     # if there is a head collision, return True
     return headCollision
 
+class Colors():
+    red = (255, 179, 186)
+    orange = (255, 223, 186)
+    yellow = (255, 255, 186)
+    green = (186, 255, 201)
+    blue = (186, 225, 255)
+    purple = (227, 218, 255)
+
 class Entity(pygame.sprite.Sprite):
     # Used by any entity that needs to have physics applied to it
     def __init__(self, screen):
@@ -35,7 +43,7 @@ class Entity(pygame.sprite.Sprite):
         
 # Players are called boxies
 class Player(Entity):
-    def __init__(self, screen, x, y, controlScheme, color=(255, 255, 255)):
+    def __init__(self, screen, x, y, controlScheme, color=Colors.red):
         Entity.__init__(self, screen)
 
         # show boxie image
@@ -70,7 +78,7 @@ class Player(Entity):
         self.lastTimeShieldBubble = 0
 
         # Define variable where the type is the pistol class
-        self.weapon = BasicPistol(screen, self)
+        self.weapon = AssaultRifle(screen, self)
 
     def displayGUI(self, screen):
         playerHealthBar = HealthBar(screen, self)
@@ -207,9 +215,6 @@ class Player(Entity):
         # if player is using controller, then set the direction to the controller
         self.direction = self.getDirectionJoy((joystick.get_axis(2), joystick.get_axis(3)))
         
-                
-
-
         self.moveHorizontal(axis0 * 10, mapSprites)
 
         # if player joystick is up, then jump
@@ -290,6 +295,17 @@ class Player(Entity):
             elif not self.weapon.isReloading:  # if no ammo and not already reloading
                 self.weapon.startReload()
 
+    def respawnPlayerAtCords(self, x, y):
+        self.rect.left = x
+        self.rect.top = y
+        self.x = x
+        self.y = y
+        self.Health = self.MaxHealth
+        # reset ammo
+        self.weapon.ammo = self.weapon.magazineSize
+
+
+
     def update(self):
         # update player's position
         self.rect.center = (self.x, self.y)
@@ -312,16 +328,14 @@ class Player(Entity):
                 # draw the shield bubble from here
                 self.screen.blit(self.shieldBubble.image, self.shieldBubble.rect)
         
-            
-
         # draw the player's health bar and ammo count
         self.screen.blit(player_health_bar.image, player_health_bar.rect)
         self.screen.blit(player_ammo_count.image, player_ammo_count.rect)
 
-        
-
         # update the weapon's position and state
         self.weapon.update()
+    
+
 
 class ShieldBubble(Entity):
     def __init__(self, screen, player):
@@ -365,20 +379,12 @@ class MapObject(pygame.sprite.Sprite):
         self.objectHealth = 0
         self.latchable = False
     
-    def update(self):
-        if self.affectedByGravity:
-            self.rect.top += self.gravity
-            if self.rect.bottom > self.window.get_height():
-                self.rect.bottom = self.window.get_height()
-                self.gravity = 0
-            else:
-                self.gravity += 1
 
         # add sideways collision detection in the future
     
 
 class StaticMapObject(MapObject):
-    def __init__(self, screen, x, y, width, height, color=(0, 0, 0), collisionType="solid", latchable=False):
+    def __init__(self, screen, x, y, width, height, color=(0, 0, 0), collisionType="solid", latchable=False, affectedByGravity=False, gravity=0):
         MapObject.__init__(self, screen)
         self.image = pygame.Surface((width, height))
         self.image = self.image.convert()
@@ -393,10 +399,40 @@ class StaticMapObject(MapObject):
         self.canBeDestroyed = False
         self.objectHealth = 0
         self.latchable = latchable
-        self.affectedByGravity = False
+        self.affectedByGravity = affectedByGravity
+        self.gravity = gravity
     
+    def runtimeGravity(self, mapSprites):
+        if self.affectedByGravity:
+            if self.gravity > 0:
+                print("test")
+                self.moveVertical(self.gravity, mapSprites)
+                if collisionCheck(self, mapSprites):
+                    self.gravity = 0.1
+                else:
+                    self.gravity += 1.0
+
+    def moveVertical(self, y, mapSprites):
+        self.rect.top += y
+        for sprite in mapSprites:
+            if pygame.sprite.collide_rect(self, sprite):
+                if y < 0:
+                    self.rect.top = sprite.rect.bottom
+                elif y > 0:
+                    self.rect.bottom = sprite.rect.top
+        self.y = self.rect.center[1]
+
+    def moveHorizontal(self, x, mapSprites):
+        self.rect.left += x
+        for sprite in mapSprites:
+            if pygame.sprite.collide_rect(self, sprite):
+                if x < 0:
+                    self.rect.left = sprite.rect.right
+                elif x > 0:
+                    self.rect.right = sprite.rect.left
+        self.x = self.rect.center[0]
+
     def update(self):
-        # call parent update
         MapObject.update(self)
 
         
@@ -481,6 +517,8 @@ class WeaponBase(pygame.sprite.Sprite):
         self.bulletList.update()
         self.bulletList.draw(self.window)
 
+    
+
 
 # bullets are entities that move in a straight line with a little bit of gravity and rotation
 class Bullet(Entity):
@@ -491,7 +529,7 @@ class Bullet(Entity):
         # Define the bullet's dimensions
         self.bulletSize = 10
         self.image = pygame.Surface((self.bulletSize, self.bulletSize))
-        self.image.fill((0, 0, 0))  # bullet color
+        self.image.fill((255, 255, 255))  # bullet color
 
         # Initialize position and direction
         self.rect = self.image.get_rect(center=(x, y))

@@ -7,6 +7,8 @@ def collisionCheck(player, mapSprites):
     headCollision = False
     for sprite in mapSprites:
         if pygame.sprite.collide_rect(player, sprite):
+            if sprite.decorative:
+                continue # ignore decorative sprites
             headCollision = True
             break
     player.rect.top += 1  # reset position after checking
@@ -138,53 +140,34 @@ class Player(Entity):
     
     # use x and y to keep track of the player's position, and thats the center of the player
     def moveHorizontal(self, x, mapSprites):
-        if x < 0:
-            # move the player to the left
-            self.rect.left += x
-            for sprite in mapSprites:
-                if pygame.sprite.collide_rect(self, sprite):
-                    if x < 0:
-                        if sprite.latchable:
-                            self.canLatch = True
-                        # if the sprite is affected by physics, push the object and dont stop the collision
-                        if sprite.affectedByGravity:
-                            # use moveHorizontal to push the object from
-                            sprite.moveHorizontal(x, mapSprites)
-                        else:
-                            self.rect.left = sprite.rect.right
-                    elif x > 0:
-                        if sprite.latchable:
-                            self.canLatch = True
+        # Reset the latchable flag to False initially
+        self.canLatch = False
 
-                        if sprite.affectedByGravity:
-                            sprite.moveHorizontal(x, mapSprites)
-                        else:
-                            self.rect.right = sprite.rect.left
-                else:
-                    self.canLatch = False
-        elif x > 0:
-            # move the player to the right
-            self.rect.left += x
-            for sprite in mapSprites:
-                if pygame.sprite.collide_rect(self, sprite):
-                    if x > 0:
-                        if sprite.latchable:
-                            self.canLatch = True
-                        if sprite.affectedByGravity:
-                            sprite.moveHorizontal(x, mapSprites)
-                        else:
-                            self.rect.right = sprite.rect.left
-                    elif x < 0:
-                        if sprite.latchable:
-                            self.canLatch = True
-                        if sprite.affectedByGravity:
-                            sprite.moveHorizontal(x, mapSprites)
-                        else:
-                            self.rect.left = sprite.rect.right
-                    else:
-                        self.canLatch = False
-        # center the player's x to the rect
+        # Move the player horizontally
+        self.rect.left += x
+
+        # Check collisions with map sprites
+        for sprite in mapSprites:
+            if pygame.sprite.collide_rect(self, sprite):
+                if x < 0:  # Moving left
+                    if sprite.latchable:
+                        self.canLatch = True
+                    if sprite.affectedByGravity:
+                        sprite.moveHorizontal(x, mapSprites)
+                    elif not sprite.decorative:  # Block movement if not decorative
+                        self.rect.left = sprite.rect.right
+                elif x > 0:  # Moving right
+                    if sprite.latchable:
+                        self.canLatch = True
+                    if sprite.affectedByGravity:
+                        sprite.moveHorizontal(x, mapSprites)
+                    elif not sprite.decorative:  # Block movement if not decorative
+                        self.rect.right = sprite.rect.left
+
+        # Center the player's x-coordinate
         self.x = self.rect.center[0]
+
+
 
     def moveVertical(self, y, mapSprites):
         if not self.latching:
@@ -192,9 +175,19 @@ class Player(Entity):
             for sprite in mapSprites:
                 if pygame.sprite.collide_rect(self, sprite):
                     if y < 0:
-                        self.rect.top = sprite.rect.bottom
+                        if sprite.affectedByGravity:
+                            sprite.moveVertical(y, mapSprites)
+                        elif sprite.decorative:
+                            pass
+                        else:
+                            self.rect.top = sprite.rect.bottom
                     elif y > 0:
-                        self.rect.bottom = sprite.rect.top
+                        if sprite.affectedByGravity:
+                            self.rect.bottom = sprite.rect.top
+                        elif sprite.decorative:
+                            pass
+                        else:
+                            self.rect.bottom = sprite.rect.top
             # center the player's y to the rect
             self.y = self.rect.center[1]
 
@@ -202,7 +195,11 @@ class Player(Entity):
         self.rect.top += 1
         on_ground = False
         for sprite in mapSprites:
-            if pygame.sprite.collide_rect(self, sprite):
+            if pygame.sprite.collide_rect(self, sprite): 
+                # if its in a decorative block it doesnt mean it can jump
+                if sprite.decorative:
+                    continue
+                
                 on_ground = True
                 break
         self.rect.top -= 1
@@ -394,12 +391,9 @@ class MapObject(pygame.sprite.Sprite):
         self.objectHealth = 0
         self.latchable = False
     
-
-        # add sideways collision detection in the future
     
-
 class StaticMapObject(MapObject):
-    def __init__(self, screen, x, y, width, height, color=(0, 0, 0), alpha=255, collisionType="solid", latchable=False, affectedByGravity=False, gravity=0):
+    def __init__(self, screen, x, y, width, height, color=(0, 0, 0), alpha=255, collisionType="solid", latchable=False, affectedByGravity=False, gravity=0, decorative=False):
         MapObject.__init__(self, screen)
         self.image = pygame.Surface((width, height))
         self.image = self.image.convert()
@@ -418,6 +412,8 @@ class StaticMapObject(MapObject):
         self.affectedByGravity = affectedByGravity
         self.gravity = gravity
         self.verticalVelocity = 0  # Add vertical velocity for smooth falling
+        self.decorative = decorative
+        self.blownUp = False
 
     def runtimeGravity(self, mapSprites):
         if self.affectedByGravity:
@@ -435,9 +431,15 @@ class StaticMapObject(MapObject):
         for sprite in mapSprites:
             if sprite != self and pygame.sprite.collide_rect(self, sprite):
                 if y > 0:  # Falling down
+                    if sprite.decorative:
+                        continue
+
                     self.rect.bottom = sprite.rect.top
                     self.verticalVelocity = 0  # Stop falling
                 elif y < 0:  # Moving up
+                    if sprite.decorative:
+                        continue
+
                     self.rect.top = sprite.rect.bottom
                     self.verticalVelocity = 0  # Stop upward motion
         self.y = self.rect.center[1]
@@ -448,17 +450,37 @@ class StaticMapObject(MapObject):
         for sprite in mapSprites:
             if sprite != self and pygame.sprite.collide_rect(self, sprite):
                 if x < 0:
+                    # if it interacts with a map object thats decorative, ignore
+                    if sprite.decorative:
+                        continue
+
                     if sprite.affectedByGravity:
                         sprite.moveHorizontal(x, mapSprites)
                     else:
                         self.rect.left = sprite.rect.right
                 elif x > 0:
+                    if sprite.decorative:
+                        continue
+
                     if sprite.affectedByGravity:
                         sprite.moveHorizontal(x, mapSprites)
                     else:
                         self.rect.right = sprite.rect.left
         self.x = self.rect.center[0]
 
+    def shootBulletsAllDirections(self, bulletList, bulletSpeed, damage):
+        if self.blownUp:
+            return
+        else:
+            self.blownUp = True
+
+            for i in range(0, 360, 15):
+                bullet = Bullet(self.window, self.rect.centerx, self.rect.centery, i, bulletSpeed, pygame.time.get_ticks(), damage)
+                bulletList.add(bullet)
+            
+            self.kill()
+            
+        
 
     def update(self):
         MapObject.update(self)
@@ -593,14 +615,20 @@ class Bullet(Entity):
         self.y += self.yVelocity
         self.rect.center = (self.x, self.y)
 
-    def collisionDetection(self, mapSprites, players):
+    def collisionDetection(self, mapSprites, players, bulletList):
         # Check if bullet collides with any map sprites
         for sprite in mapSprites:
             if pygame.sprite.collide_rect(self, sprite):
+                # if the bullet his a decorative sprite, ignore
+                if sprite.decorative:
+                    continue
+
                 if sprite.hasCollision:
                     if sprite.collisionType == "solid":
                         self.kill()
                     elif sprite.collisionType == "damage":
+                        # shoot bullets in all directions
+                        sprite.shootBulletsAllDirections(bulletList, 25, 33)
                         self.kill()
                     elif sprite.collisionType == "bounce":
                         # Reverse direction on collision
@@ -619,7 +647,7 @@ class Bullet(Entity):
             if player.shieldBubble:
                 if pygame.sprite.collide_rect(self, player.shieldBubble):
                     # if its from your own bullets, ignore
-                    if pygame.time.get_ticks() - self.bulletCastTime < 100:
+                    if pygame.time.get_ticks() - self.bulletCastTime < 40:
                         return
 
                     print("shield hit", player.shieldBubble.Health)
@@ -628,7 +656,7 @@ class Bullet(Entity):
                     self.kill()
 
             if pygame.sprite.collide_rect(self, player):
-                if pygame.time.get_ticks() - self.bulletCastTime > 100:
+                if pygame.time.get_ticks() - self.bulletCastTime > 40:
                     print("player hit")
                     player.Health -= self.damage
                     self.kill()

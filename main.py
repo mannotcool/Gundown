@@ -50,7 +50,9 @@ def main():
     
     # E - Entities (just background for now)
     # make background space.gif in art
-    background = pygame.image.load("src/art/space.gif")
+    background = pygame.image.load("src/art/dark_background.gif")
+
+    screen.blit(background, (0,0))
 
     # change mouse cursor to a crosshair
     pygame.mouse.set_visible(False)
@@ -61,29 +63,99 @@ def main():
     crosshair = pygame.transform.scale(crosshair, (32, 32))
 
 
-    screen.blit(background, (0,0))
+    # MAP A:
 
-    # create 4 walls that surround the screen
-    top_wall = character_sprites.StaticMapObject(screen, 0, 0, 1280, 10, (5, 1, 23, 255), 255)
-    left_wall = character_sprites.StaticMapObject(screen, -20, 0, 10, 720, (5, 1, 23, 50), 255)
-    right_wall = character_sprites.StaticMapObject(screen, 1280, 0, 10, 720, (5, 1, 23, 50), 255)
+    # border walls
+    left_wall = character_sprites.StaticMapObject(screen, -20, 0, 10, 720, (5, 1, 23), 255)
+    right_wall = character_sprites.StaticMapObject(screen, 1280, 0, 10, 720, (5, 1, 23), 255)
 
-    # latching testing wall 
-    climable_wall = character_sprites.StaticMapObject(screen, 1260, 560, 10, 120, (200, 0, 200), 255, "solid", True)
+    floor = character_sprites.StaticMapObject(screen, 20, 655, 1240, 20, (60, 60, 255), 255)
 
-    # extra platform
-    platform = character_sprites.StaticMapObject(screen, 500, 600, 300, 20, (32, 4, 131), 100)
-    floor = character_sprites.StaticMapObject(screen, 0, 710, 1280, 10, (255, 255, 255, 30), 255)
+    # add decorative pillars below the floor, 6 total evenly spaced
+    decorative_pillars = pygame.sprite.Group()
 
-    # add a small 1/3rd green wall that is just bouncing around
-    bounce_demo_wall = character_sprites.StaticMapObject(screen, 700, 10, 300, 10, (0, 255, 0), 255, "bounce")
+    for i in range(6):
+        pillar = character_sprites.StaticMapObject(screen, 100 + (i * 200), 675, 40, 90, (60, 60, 255), 50, "solid", False, False, 1, True)
+        decorative_pillars.add(pillar)
 
-    # add a box with physics
-    box = character_sprites.StaticMapObject(screen, 500, 200, 50, 50, (255, 0, 0), 255, "solid", False, True, 1)
+    # create 2 pillars above the floor, spaced evenly between the first 2 ground pillars of each equivalent side
+    # left pillar
+    left_pillar = character_sprites.StaticMapObject(screen, 200, 380, 40, 290, (60, 60, 255), 50, "solid", False, False, 1, True)
+    # right pillar
+    right_pillar = character_sprites.StaticMapObject(screen, 1000, 380, 40, 290, (60, 60, 255), 50, "solid", False, False, 1, True)
+    decorative_pillars.add(left_pillar, right_pillar)
+
+    # now add solid blocks on the top of the pillars
+    # left pillar top
+    left_pillar_mid = character_sprites.StaticMapObject(screen, 200, 560, 40, 40, (60, 60, 255), 255, "solid", True)
+    # right pillar top
+    right_pillar_mid = character_sprites.StaticMapObject(screen, 1000, 560, 40, 40, (60, 60, 255), 255, "solid", True)
+    decorative_pillars.add(left_pillar_mid, right_pillar_mid)
+    
+    # add 2 actual top blocks
+    # left pillar top
+    left_pillar_top = character_sprites.StaticMapObject(screen, 130, 360, 180, 20, (60, 60, 255), 255, "solid", True)
+    # right pillar top
+    right_pillar_top = character_sprites.StaticMapObject(screen, 930, 360, 180, 20, (60, 60, 255), 255, "solid", True)
+    
+    decorative_pillars.add(left_pillar_top, right_pillar_top)
+
+    # d pillars between the next set of ground pillars inwards from the ones we just created, 4 total evenly spaced, 2 on each side
+    # left pillar
+    left_pillar_2 = character_sprites.StaticMapObject(screen, 400, 540, 40, 120, (60, 60, 255), 50, "solid", False, False, 1, True)
+    # right pillar
+    right_pillar_2 = character_sprites.StaticMapObject(screen, 800, 540, 40, 120, (60, 60, 255), 50, "solid", False, False, 1, True)
+    
+    # 2 L shapes
+    left_L = character_sprites.StaticMapObject(screen, 360, 500, 100, 40, (60, 60, 255), 255, "solid", True)
+    left_L2 = character_sprites.StaticMapObject(screen, 440, 460, 40, 80, (60, 60, 255), 255, "solid", True)
+   
+    right_L = character_sprites.StaticMapObject(screen, 780, 500, 100, 40, (60, 60, 255), 255, "solid", True)
+    right_L2 = character_sprites.StaticMapObject(screen, 760, 460, 40, 80, (60, 60, 255), 255, "solid", True)
+
+
+    decorative_pillars.add(left_L, left_L2, right_L, right_L2)
+    
+
+    decorative_pillars.add(left_pillar_2, right_pillar_2)
+
+    # now add a middle pillar with a platform on top
+    middle_pillar = character_sprites.StaticMapObject(screen, 600, 420, 40, 240, (60, 60, 255), 50, "solid", False, False, 1, True)
+    middle_pillar_top = character_sprites.StaticMapObject(screen, 540, 410, 160, 20, (60, 60, 255), 255, "solid", True)
+    decorative_pillars.add(middle_pillar, middle_pillar_top)
+
+    # now add 2 movable physics blocks 40 by 40 on each side of the middle pillar exactly
+    left_movable = character_sprites.StaticMapObject(screen, 560, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
+    right_movable = character_sprites.StaticMapObject(screen, 640, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
+    # put in the middle of the 2 a block that is of type "damage" instead of solid, movable, and 
+    
+    # add a 40,40 block with physics that is in the middle where the floor is so its touching the flor
+    middle_pedestal = character_sprites.StaticMapObject(screen, 600, 635, 40, 40, (60, 60, 255), 225, "solid", False)
+    middle_damage = character_sprites.StaticMapObject(screen, 600, 500, 40, 40, (255, 60, 60), 225, "damage", False, True, 1)
+
+    decorative_pillars.add(middle_pedestal)
+
+    physicsObjects = pygame.sprite.Group(left_movable, right_movable, middle_damage)
+
+
+
+    # make a box that you can walk through
+    # box_walkthrough = character_sprites.StaticMapObject(screen, 600, 400, 50, 50, (200, 0, 0), 100, "solid", False, False, 1, True)
+
+    
+
+
+
+
+
+
 
     # create a sprite group for all physics objects
-    physicsObjects = pygame.sprite.Group(box) 
-    mapSprites = pygame.sprite.Group(top_wall, left_wall, floor, platform, right_wall, bounce_demo_wall, climable_wall, physicsObjects)
+    mapSprites = pygame.sprite.Group(decorative_pillars, left_wall, right_wall, floor, physicsObjects)
+
+    # -- END OF MAP --
+
+    # PLAYERS
 
     players = pygame.sprite.Group()
     # create a player sprite object from our mySprites module
@@ -92,7 +164,7 @@ def main():
 
 
     # add all sprites include the player, weapon, bullets, and map sprites to the allSprites group
-    allSprites = pygame.sprite.OrderedUpdates(players, mapSprites)
+    allSprites = pygame.sprite.OrderedUpdates(mapSprites, players)
 
     # for each player, append their weapon to the allSprites group
     for player in players:
@@ -152,7 +224,7 @@ def main():
                 
             # allow bullets to have collision with walls
             for bullet in player.weapon.bulletList:
-                bullet.collisionDetection(mapSprites, players)
+                bullet.collisionDetection(mapSprites, players, player.weapon.bulletList)
 
         # put ammo count as black text top right
         font = pygame.font.SysFont("Arial", 16)

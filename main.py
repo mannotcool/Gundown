@@ -1,8 +1,7 @@
 # I - Import
-import pygame
-import sys
+import pygame # type: ignore
 
-from src.modules import character_sprites
+from src.modules import mapManager, entities, utils
 
 """
 GENERAL NOTES:
@@ -40,6 +39,18 @@ version = "0.3.1.1"
 # enables text debug on screen
 debug = True
 
+if debug:
+    # using raw text string to print askii art
+    print(r"""   ______                    ______                                 
+ .' ___  |                  |_   _ `.                               
+/ .'   \_| __   _   _ .--.    | | `. \  .--.   _   _   __  _ .--.   
+| |   ____[  | | | [ `.-. |   | |  | |/ .'`\ \[ \ [ \ [  ][ `.-. |  
+\ `.___]  || \_/ |, | | | |  _| |_.' /| \__. | \ \/\ \/ /  | | | |  
+ `._____.' '.__.'_/[___||__]|______.'  '.__.'   \__/\__/  [___||__] 
+                                                                    """)
+    print("Gundown - " + version + " - Debug: " + str(debug))
+    print("Hello! If you are seeing this, debug mode is enabled. You may turn it off by setting debug to False in main.py")
+
 def main():
     # I - Initialize
     pygame.init()
@@ -66,52 +77,52 @@ def main():
     # MAP A:
 
     # border walls
-    left_wall = character_sprites.StaticMapObject(screen, -20, 0, 10, 720, (5, 1, 23), 255)
-    right_wall = character_sprites.StaticMapObject(screen, 1280, 0, 10, 720, (5, 1, 23), 255)
+    left_wall = mapManager.StaticMapObject(screen, -20, 0, 10, 720, (5, 1, 23), 255)
+    right_wall = mapManager.StaticMapObject(screen, 1280, 0, 10, 720, (5, 1, 23), 255)
 
-    floor = character_sprites.StaticMapObject(screen, 20, 655, 1240, 20, (60, 60, 255), 255)
+    floor = mapManager.StaticMapObject(screen, 20, 655, 1240, 20, (60, 60, 255), 255)
 
     # add decorative pillars below the floor, 6 total evenly spaced
     decorative_pillars = pygame.sprite.Group()
 
     for i in range(6):
-        pillar = character_sprites.StaticMapObject(screen, 100 + (i * 200), 675, 40, 90, (60, 60, 255), 50, "solid", False, False, 1, True)
+        pillar = mapManager.StaticMapObject(screen, 100 + (i * 200), 675, 40, 90, (60, 60, 255), 50, "solid", False, False, 1, True)
         decorative_pillars.add(pillar)
 
     # create 2 pillars above the floor, spaced evenly between the first 2 ground pillars of each equivalent side
     # left pillar
-    left_pillar = character_sprites.StaticMapObject(screen, 200, 380, 40, 290, (60, 60, 255), 50, "solid", False, False, 1, True)
+    left_pillar = mapManager.StaticMapObject(screen, 200, 380, 40, 290, (60, 60, 255), 50, "solid", False, False, 1, True)
     # right pillar
-    right_pillar = character_sprites.StaticMapObject(screen, 1000, 380, 40, 290, (60, 60, 255), 50, "solid", False, False, 1, True)
+    right_pillar = mapManager.StaticMapObject(screen, 1000, 380, 40, 290, (60, 60, 255), 50, "solid", False, False, 1, True)
     decorative_pillars.add(left_pillar, right_pillar)
 
     # now add solid blocks on the top of the pillars
     # left pillar top
-    left_pillar_mid = character_sprites.StaticMapObject(screen, 200, 560, 40, 40, (60, 60, 255), 255, "solid", True)
+    left_pillar_mid = mapManager.StaticMapObject(screen, 200, 560, 40, 40, (60, 60, 255), 255, "solid", True)
     # right pillar top
-    right_pillar_mid = character_sprites.StaticMapObject(screen, 1000, 560, 40, 40, (60, 60, 255), 255, "solid", True)
+    right_pillar_mid = mapManager.StaticMapObject(screen, 1000, 560, 40, 40, (60, 60, 255), 255, "solid", True)
     decorative_pillars.add(left_pillar_mid, right_pillar_mid)
     
     # add 2 actual top blocks
     # left pillar top
-    left_pillar_top = character_sprites.StaticMapObject(screen, 130, 360, 180, 20, (60, 60, 255), 255, "solid", True)
+    left_pillar_top = mapManager.StaticMapObject(screen, 130, 360, 180, 20, (60, 60, 255), 255, "solid", True)
     # right pillar top
-    right_pillar_top = character_sprites.StaticMapObject(screen, 930, 360, 180, 20, (60, 60, 255), 255, "solid", True)
+    right_pillar_top = mapManager.StaticMapObject(screen, 930, 360, 180, 20, (60, 60, 255), 255, "solid", True)
     
     decorative_pillars.add(left_pillar_top, right_pillar_top)
 
     # d pillars between the next set of ground pillars inwards from the ones we just created, 4 total evenly spaced, 2 on each side
     # left pillar
-    left_pillar_2 = character_sprites.StaticMapObject(screen, 400, 540, 40, 120, (60, 60, 255), 50, "solid", False, False, 1, True)
+    left_pillar_2 = mapManager.StaticMapObject(screen, 400, 540, 40, 120, (60, 60, 255), 50, "solid", False, False, 1, True)
     # right pillar
-    right_pillar_2 = character_sprites.StaticMapObject(screen, 800, 540, 40, 120, (60, 60, 255), 50, "solid", False, False, 1, True)
+    right_pillar_2 = mapManager.StaticMapObject(screen, 800, 540, 40, 120, (60, 60, 255), 50, "solid", False, False, 1, True)
     
     # 2 L shapes
-    left_L = character_sprites.StaticMapObject(screen, 360, 500, 100, 40, (60, 60, 255), 255, "solid", True)
-    left_L2 = character_sprites.StaticMapObject(screen, 440, 460, 40, 80, (60, 60, 255), 255, "solid", True)
+    left_L = mapManager.StaticMapObject(screen, 360, 500, 100, 40, (60, 60, 255), 255, "solid", True)
+    left_L2 = mapManager.StaticMapObject(screen, 440, 460, 40, 80, (60, 60, 255), 255, "solid", True)
    
-    right_L = character_sprites.StaticMapObject(screen, 780, 500, 100, 40, (60, 60, 255), 255, "solid", True)
-    right_L2 = character_sprites.StaticMapObject(screen, 760, 460, 40, 80, (60, 60, 255), 255, "solid", True)
+    right_L = mapManager.StaticMapObject(screen, 780, 500, 100, 40, (60, 60, 255), 255, "solid", True)
+    right_L2 = mapManager.StaticMapObject(screen, 760, 460, 40, 80, (60, 60, 255), 255, "solid", True)
 
 
     decorative_pillars.add(left_L, left_L2, right_L, right_L2)
@@ -120,18 +131,18 @@ def main():
     decorative_pillars.add(left_pillar_2, right_pillar_2)
 
     # now add a middle pillar with a platform on top
-    middle_pillar = character_sprites.StaticMapObject(screen, 600, 420, 40, 240, (60, 60, 255), 50, "solid", False, False, 1, True)
-    middle_pillar_top = character_sprites.StaticMapObject(screen, 540, 410, 160, 20, (60, 60, 255), 255, "solid", True)
+    middle_pillar = mapManager.StaticMapObject(screen, 600, 420, 40, 240, (60, 60, 255), 50, "solid", False, False, 1, True)
+    middle_pillar_top = mapManager.StaticMapObject(screen, 540, 410, 160, 20, (60, 60, 255), 255, "solid", True)
     decorative_pillars.add(middle_pillar, middle_pillar_top)
 
     # now add 2 movable physics blocks 40 by 40 on each side of the middle pillar exactly
-    left_movable = character_sprites.StaticMapObject(screen, 560, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
-    right_movable = character_sprites.StaticMapObject(screen, 640, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
+    left_movable = mapManager.StaticMapObject(screen, 560, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
+    right_movable = mapManager.StaticMapObject(screen, 640, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
     # put in the middle of the 2 a block that is of type "damage" instead of solid, movable, and 
     
     # add a 40,40 block with physics that is in the middle where the floor is so its touching the flor
-    middle_pedestal = character_sprites.StaticMapObject(screen, 600, 635, 40, 40, (60, 60, 255), 225, "solid", False)
-    middle_damage = character_sprites.StaticMapObject(screen, 600, 500, 40, 40, (255, 60, 60), 225, "damage", False, True, 1)
+    middle_pedestal = mapManager.StaticMapObject(screen, 600, 635, 40, 40, (60, 60, 255), 225, "solid", False)
+    middle_damage = mapManager.StaticMapObject(screen, 600, 500, 40, 40, (255, 60, 60), 225, "damage", False, True, 1)
 
     decorative_pillars.add(middle_pedestal)
 
@@ -159,7 +170,7 @@ def main():
 
     players = pygame.sprite.Group()
     # create a player sprite object from our mySprites module
-    players.add(character_sprites.Player(screen, 100, 100, "mouse", character_sprites.Colors.purple))
+    players.add(entities.Player(screen, 100, 100, "mouse", utils.Colors.purple))
 
 
 
@@ -194,7 +205,7 @@ def main():
 
         # if the L button is pressed, add 1 more player for a max of 2 players
         if pygame.key.get_pressed()[pygame.K_l] and len(players) < 2:
-            players.add(character_sprites.Player(screen, 100, 100, "controller", (255, 255, 0)))
+            players.add(entities.Player(screen, 100, 100, "controller", (255, 255, 0)))
             allSprites.add(players)
             # add the new player's weapon to the allSprites group
             for player in players:
@@ -234,6 +245,7 @@ def main():
         if debug:
             # make it so its based on how many players there are and put it into list
             p1Name = font.render("Player 1", True, (150, 0, 0))
+            p1Id = font.render("ID: " + str(players.sprites()[0].id), True, (255, 255, 255))
             p1AmmoText = font.render("Ammo: " + str(players.sprites()[0].weapon.ammo), True, (255, 255, 255))
             p1TextX = font.render("Player X: " + str(players.sprites()[0].rect.x), True, (255, 255, 255))
             p1TextY = font.render("Player Y: " + str(players.sprites()[0].rect.y), True, (255, 255, 255))
@@ -247,6 +259,7 @@ def main():
             # if there is a second player, add the debug text for player 2
             if len(players) > 1:
                 p2Name = font.render("Player 2", True, (0, 0, 150))
+                p2Id = font.render("ID: " + str(players.sprites()[1].id), True, (255, 255, 255))
                 p2AmmoText = font.render("Ammo: " + str(players.sprites()[1].weapon.ammo), True, (255, 255, 255))
                 p2TextX = font.render("Player X: " + str(players.sprites()[1].rect.x), True, (255, 255, 255))
                 p2TextY = font.render("Player Y: " + str(players.sprites()[1].rect.y), True, (255, 255, 255))
@@ -297,6 +310,7 @@ def main():
         # draw the debug text
         if debug:
             screen.blit(p1Name, (1000, 20))
+            screen.blit(p1Id, (1000, 240))
             screen.blit(p1AmmoText, (1000, 40))
             screen.blit(p1TextX, (1000, 60))
             screen.blit(p1TextY, (1000, 80))
@@ -310,6 +324,7 @@ def main():
 
             if len(players) > 1:
                 # same height other side of screen
+                screen.blit(p2Id, (20, 240))
                 screen.blit(p2Name, (20, 20))
                 screen.blit(p2AmmoText, (20, 40))
                 screen.blit(p2TextX, (20, 60))

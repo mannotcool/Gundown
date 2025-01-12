@@ -111,3 +111,7 @@ class ScoreKeeper(pygame.sprite.Sprite):
             x = i * (self.largeSize + self.spacing)
             y = (self.imageHeight - size) // 2
             pygame.draw.rect(self.image, self.color, (x, y, size, size))
+
+
+
+

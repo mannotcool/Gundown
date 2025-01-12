@@ -2,6 +2,7 @@
 import pygame # type: ignore
 
 from src.modules import mapManager, entities, utils, gui
+from src.modules import sceneManager
 
 """
 GENERAL NOTES:
@@ -34,22 +35,10 @@ purple: (227,218,255)
 
 """
 
-version = "0.3.1.1"
+version = "0.6.0"
 
 # enables text debug on screen
 debug = True
-
-if debug:
-    # using raw text string to print askii art
-    print(r"""   ______                    ______                                 
- .' ___  |                  |_   _ `.                               
-/ .'   \_| __   _   _ .--.    | | `. \  .--.   _   _   __  _ .--.   
-| |   ____[  | | | [ `.-. |   | |  | |/ .'`\ \[ \ [ \ [  ][ `.-. |  
-\ `.___]  || \_/ |, | | | |  _| |_.' /| \__. | \ \/\ \/ /  | | | |  
- `._____.' '.__.'_/[___||__]|______.'  '.__.'   \__/\__/  [___||__] 
-                                                                    """)
-    print("Gundown - " + version + " - Debug: " + str(debug))
-    print("Hello! If you are seeing this, debug mode is enabled. You may turn it off by setting debug to False in main.py")
 
 def main():
     # I - Initialize
@@ -59,6 +48,12 @@ def main():
     screen = pygame.display.set_mode((1280, 720))
     pygame.display.set_caption("Gundown - " + version + " - Debug: " + str(debug))
     
+    # if debug is on, print number of joysticks connected
+    if debug:
+        print("Number of joysticks connected on boot: " + str(pygame.joystick.get_count()))
+
+    selectedPlayerColors = sceneManager.showStartScreen(screen)
+
     # E - Entities (just background for now)
     # make background space.gif in art
     background = pygame.image.load("src/art/dark_background.gif")
@@ -136,8 +131,8 @@ def main():
     decorative_pillars.add(middle_pillar, middle_pillar_top)
 
     # now add 2 movable physics blocks 40 by 40 on each side of the middle pillar exactly
-    left_movable = mapManager.StaticMapObject(screen, 560, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
-    right_movable = mapManager.StaticMapObject(screen, 640, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
+    left_movable = mapManager.StaticMapObject(screen, 570, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
+    right_movable = mapManager.StaticMapObject(screen, 630, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
     # put in the middle of the 2 a block that is of type "damage" instead of solid, movable, and 
     
     # add a 40,40 block with physics that is in the middle where the floor is so its touching the flor
@@ -153,9 +148,12 @@ def main():
     # make a box that you can walk through
     # box_walkthrough = character_sprites.StaticMapObject(screen, 600, 400, 50, 50, (200, 0, 0), 100, "solid", False, False, 1, True)
 
+    # create the players with the colors selected
+
+
     players = pygame.sprite.Group()
     # create a player sprite object from our mySprites module
-    players.add(entities.Player(screen, 100, 100, "mouse", utils.Colors.purple))
+    players.add(entities.Player(screen, 100, 100, "mouse", selectedPlayerColors[0], None))
     
     # pick up all game controllers that exist and create a player for each one
     # check if there is a controller available
@@ -164,8 +162,11 @@ def main():
         # add them do not set players yet
         for i in range(joystick_count):
             # initalize and add the joystick
-            players.add(entities.Player(screen, 100, 100, "controller", utils.Colors.purple, pygame.joystick.Joystick(i)))
+            players.add(entities.Player(screen, 100, 100, "controller", selectedPlayerColors[i + 1], pygame.joystick.Joystick(i)))
             
+
+    # now respawn them:
+    utils.generalizedRespawn(players)
 
     # create a sprite group for all physics objects
     mapSprites = pygame.sprite.Group(decorative_pillars, left_wall, right_wall, floor, physicsObjects)
@@ -177,8 +178,6 @@ def main():
 
 
     scoreKeeper1 = gui.ScoreKeeper(screen, players.sprites()[0])
-
-
 
     # add all sprites include the player, weapon, bullets, and map sprites to the allSprites group
     allSprites = pygame.sprite.OrderedUpdates(mapSprites, players)
@@ -199,8 +198,6 @@ def main():
         # T - Timer to set frame rate
         clock.tick(60) 
 
-        
-    
         # E - Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -208,8 +205,10 @@ def main():
 
         # make the mouse cursor the crosshair
         
-
-
+        # if someone clicks u, respawn all players
+        if pygame.key.get_pressed()[pygame.K_u]:
+            utils.generalizedRespawn(players)
+                    
         # scan to see if a controller is detected and switch to controller if so 
         joystick_count = pygame.joystick.get_count()
 
@@ -295,7 +294,6 @@ def main():
             # check if player is dead
             if player.Health <= 0:
                 player.isDead = True
-                print("Player is dead")
 
             # the reload complete method checks if the reload time has passed and if so, sets the ammo back to the max
             player.weapon.checkReloadComplete()
@@ -352,8 +350,6 @@ def main():
                     screen.blit(p3TextCanLatch, (20, 440))
                     screen.blit(p3TextIsLatched, (20, 420))
 
-
-
         allSprites.update()              # Update all sprites
         allSprites.draw(screen)          # Draw all sprites
         screen.blit(crosshair, pygame.mouse.get_pos()) # draw the crosshair on top of everything
@@ -362,4 +358,16 @@ def main():
     # Close the game window
     pygame.quit()
 
+if debug:
+    # using raw text string to print askii art
+    print(r"""   ______                    ______                                 
+ .' ___  |                  |_   _ `.                               
+/ .'   \_| __   _   _ .--.    | | `. \  .--.   _   _   __  _ .--.   
+| |   ____[  | | | [ `.-. |   | |  | |/ .'`\ \[ \ [ \ [  ][ `.-. |  
+\ `.___]  || \_/ |, | | | |  _| |_.' /| \__. | \ \/\ \/ /  | | | |  
+ `._____.' '.__.'_/[___||__]|______.'  '.__.'   \__/\__/  [___||__] 
+                                                                    """)
+    print("Gundown - " + version + " - Debug: " + str(debug))
+    print("Hello! If you are seeing this, debug mode is enabled. You may turn it off by setting debug to False in main.py")
+    print("Debug mode will display player stats, such as ammo, health, and position on screen")
 main()

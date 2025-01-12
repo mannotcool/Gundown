@@ -15,6 +15,21 @@ def collisionCheck(player, mapSprites):
     # if there is a head collision, return True
     return headCollision
 
+def generalizedRespawn(players):
+    for player in players:
+        # check if they are mouse, and spawn them on the left side of the screen
+        if player.controlScheme == "mouse":
+            player.respawnPlayerAtCords(100, 100)
+        else:
+            # joystick 1 spawns in the middle and joystick 2 spawns on the right
+            # check their joystick
+            if player.joyStick.get_id() == 0:
+                # spawn in middle
+                player.respawnPlayerAtCords(600, 100)
+            else:
+                # spawn far right
+                player.respawnPlayerAtCords(1140, 100)
+
 class Colors():
     red = (255, 179, 186)
     orange = (255, 223, 186)

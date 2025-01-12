@@ -76,20 +76,21 @@ class Player(Entity):
         return playerHealthBar, playerAmmoCount
     
     def createShieldBubble(self):
-        # check if there is already a shield bubble, if so no need to create another
-        print("creating")
+        # Ensure the cooldown for shield creation is respected
+        current_time = pygame.time.get_ticks()
         if self.shieldBubble:
             print("shield already exists")
             return
-        
-        # check if the player has created a shield bubble recently, if so, dont create another
-        if pygame.time.get_ticks() - self.lastTimeShieldBubble < 8000:
+
+        if current_time - self.lastTimeShieldBubble < 8000:
             print("shield recently created")
             return
-        
-        # create a shield bubble
+
+        # Create the shield bubble
+        print("creating shield")
         self.shieldBubble = ShieldBubble(self.screen, self)
         self.shieldBubble.rect.center = self.rect.center
+        self.lastTimeShieldBubble = current_time
 
     def runTimeGravityManager(self, mapSprites):
         if self.latching:
@@ -219,12 +220,15 @@ class Player(Entity):
         # if player is dead, then dont allow movement
         if self.isDead:
             return
+        
+        # shield if any trigger is pressed
+        if joystick.get_button(9) or joystick.get_button(10):
+            print("shield")
+            self.createShieldBubble()
 
         # add deadzones to axis
         axis0 = joystick.get_axis(0)
         axis1 = joystick.get_axis(1)
-
-        print(axis0, axis1)
 
         # implement deadzone
         if axis0 < 0.1 and axis0 > -0.1:
@@ -257,11 +261,6 @@ class Player(Entity):
             if self.weapon.ammo < self.weapon.magazineSize:
                 self.weapon.startReload()
         
-        # shield if any trigger is pressed
-        if joystick.get_button(9) or joystick.get_button(10):
-            print("shield")
-            self.createShieldBubble()
-        
         # if the right trigger is pressed, fire the weapon
         right_trigger = joystick.get_axis(5) 
         if right_trigger > 0.5:  # Adjust threshold if needed
@@ -282,6 +281,9 @@ class Player(Entity):
             self.latching = False
 
     def runTimeMnkMovement(self, mapSprites):
+        if self.isDead:
+            return
+        
         # if player is using mouse, then set the direction to the mouse
         self.direction = self.getDirectionMouse(pygame.mouse.get_pos())
 
@@ -318,11 +320,12 @@ class Player(Entity):
                 self.weapon.startReload()
 
     def respawnPlayerAtCords(self, x, y):
+        self.isDead = False
         self.x = x
         self.y = y
         self.rect.left = x
         self.rect.top = y
-        self.Health = self.Max
+        self.Health = self.MaxHealth
         # reset the player's weapon ammo
         self.weapon.ammo = self.weapon.magazineSize
 
@@ -333,11 +336,6 @@ class Player(Entity):
     def update(self):
         # update player's position
         self.rect.center = (self.x, self.y)
-
-        # draw gui to player image using function
-        player_health_bar, player_ammo_count = self.displayGUI(self.screen)
-        player_health_bar.update()
-        player_ammo_count.update()
 
         # ensure shield bubble is always following the player
         if self.shieldBubble:
@@ -351,10 +349,15 @@ class Player(Entity):
 
                 # draw the shield bubble from here
                 self.screen.blit(self.shieldBubble.image, self.shieldBubble.rect)
+
+        # draw gui to player image using function
+        player_health_bar, player_ammo_count = self.displayGUI(self.screen)
+        player_health_bar.update()
+        player_ammo_count.update()
     
         # if player is dead, make them invisible
         if self.isDead:
-            self.image.set_alpha(5)
+            self.image.set_alpha(35)
         else:
             self.image.set_alpha(255)
 

@@ -1,4 +1,5 @@
 import pygame
+from . import utils
 
 def showStartScreen(screen):
     pygame.font.init()
@@ -19,7 +20,7 @@ def showStartScreen(screen):
     boxWidth = 150
     boxHeight = 150
     boxSpacing = 50
-    colors = [(255, 179, 186), (255, 223, 186), (186, 255, 201), (186, 225, 255), (227, 218, 255)]
+    colors = [utils.Colors.red, utils.Colors.blue, utils.Colors.orange, utils.Colors.purple, utils.Colors.green]
     boxes = [
         pygame.Rect((screenWidth - (3 * boxWidth + 2 * boxSpacing)) // 2, screenHeight // 3, boxWidth, boxHeight),
         pygame.Rect((screenWidth - (3 * boxWidth + 2 * boxSpacing)) // 2 + (boxWidth + boxSpacing), screenHeight // 3, boxWidth, boxHeight),

@@ -87,7 +87,7 @@ class BulletBar(pygame.sprite.Sprite):
 
 # Scorekeeper stores player score, and displays in the top left corner as squares
 class ScoreKeeper(pygame.sprite.Sprite):
-    def __init__(self, screen, player):
+    def __init__(self, screen, player, location):
         pygame.sprite.Sprite.__init__(self)
         self.window = screen
         self.player = player
@@ -100,7 +100,7 @@ class ScoreKeeper(pygame.sprite.Sprite):
         self.imageHeight = self.largeSize
         self.image = pygame.Surface((self.imageWidth, self.imageHeight))
         self.rect = self.image.get_rect()
-        self.rect.topleft = (10, 10)
+        self.rect.topleft = location
 
     def update(self):
         self.score = self.player.score

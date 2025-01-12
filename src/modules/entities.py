@@ -29,10 +29,8 @@ class Entity(pygame.sprite.Sprite):
 class Player(Entity):
     def __init__(self, screen, x, y, controlScheme, color=utils.Colors.red, joystick=None):
         Entity.__init__(self, screen)
-
-        self.id = random.randint(0, 1000000)
         self.colorScheme = color
-        self.score = 2
+        self.score = 0
         self.joyStick = joystick
 
         # show boxie image

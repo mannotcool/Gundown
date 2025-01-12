@@ -24,21 +24,12 @@ axis 5 - right trigger
 axis 4 - left trigger
 
 
-pastel color palette:
-red: (255,179,186)
-orange: (255,223,186)
-yellow: (255,255,186)
-green: (186,255,201)
-blue: (186,225,255)
-purple: (227,218,255)
-
-
 """
 
 version = "0.6.0"
 
 # enables text debug on screen
-debug = True
+debug = False
 
 def main():
     # I - Initialize
@@ -177,11 +168,14 @@ def main():
 
 
 
-    scoreKeeper1 = gui.ScoreKeeper(screen, players.sprites()[0])
+    # for every player, create a scorekeeper object
+    scoreKeepers = pygame.sprite.Group()
+    for player in players:
+        # for the index of player, make the location y 10 + 40 * index
+        scoreKeepers.add(gui.ScoreKeeper(screen, player, (20, 10 + 40 * players.sprites().index(player))))
 
     # add all sprites include the player, weapon, bullets, and map sprites to the allSprites group
-    allSprites = pygame.sprite.OrderedUpdates(mapSprites, players)
-    allSprites.add(scoreKeeper1)
+    allSprites = pygame.sprite.OrderedUpdates(mapSprites, players, scoreKeepers)
 
     # for each player, append their weapon to the allSprites group
     for player in players:
@@ -191,6 +185,7 @@ def main():
     
     # A - Assign values to key variables
     clock = pygame.time.Clock()
+    gameIsOver = False
     keepGoing = True
 
     # L - Loop
@@ -204,43 +199,76 @@ def main():
                 keepGoing = False
 
         # make the mouse cursor the crosshair
+
         
-        # if someone clicks u, respawn all players
-        if pygame.key.get_pressed()[pygame.K_u]:
-            utils.generalizedRespawn(players)
+        for player in players:
+            # if there is only 2 players, scan for 1 dead player and award the other player a point
+            if len(players) == 2:
+                if player.isDead:
+                    # award the other player a point
+                    for otherPlayer in players:
+                        if otherPlayer is not player:
+                            otherPlayer.score += 1
+                            # respawn the players
+                            utils.generalizedRespawn(players)
+            elif len(players) == 3:
+                # if there is 3 players, scan for 2 dead players and award the last player a point
+                deadPlayers = 0
+                for player in players:
+                    if player.isDead:
+                        deadPlayers += 1
+                if deadPlayers == 2:
+                    # award the other player a point
+                    for otherPlayer in players:
+                        if not otherPlayer.isDead:
+                            otherPlayer.score += 1
+                            # respawn the players
+                            utils.generalizedRespawn(players)
+               
                     
         # scan to see if a controller is detected and switch to controller if so 
         joystick_count = pygame.joystick.get_count()
+        font = pygame.font.SysFont("Arial", 16)
+        
+        if gameIsOver:
+            # if the game is over, display the winner which should be a person with 3 points
+            for player in players:
+                if player.score == 3:
+                    winnerText = font.render("Player " + str(players.sprites().index(player) + 1) + " wins!", True, player.colorScheme)
+                    screen.blit(winnerText, (640 - winnerText.get_width() // 2, 360 - winnerText.get_height() // 2))
+                    
+                    pygame.display.flip()
 
         for player in players:
-            # gravity logic
-            player.runTimeGravityManager(mapSprites)
-
-            # check if player is controller or mouse
-            if player.controlScheme == "controller":
-                if player.joyStick != None:
-                    player.joyStick.init()
-                    player.runTimeJoyMovement(player.joyStick, mapSprites)
+            # check player score to see if its 3 and if so, end the game
+            if player.score == 3 and not gameIsOver:
+                gameIsOver = True
             else:
-                player.runTimeMnkMovement(mapSprites)
+                # gravity logic
+                player.runTimeGravityManager(mapSprites)
 
-            # if the player has a shieldBuble, draw it
-            if player.shieldBubble != None:
-                allSprites.add(player.shieldBubble)
-                
-            # allow bullets to have collision with walls
-            for bullet in player.weapon.bulletList:
-                bullet.collisionDetection(mapSprites, players, player.weapon.bulletList)
+                # check if player is controller or mouse
+                if player.controlScheme == "controller":
+                    if player.joyStick != None:
+                        player.joyStick.init()
+                        player.runTimeJoyMovement(player.joyStick, mapSprites)
+                else:
+                    player.runTimeMnkMovement(mapSprites)
 
-        # put ammo count as black text top right
-        font = pygame.font.SysFont("Arial", 16)
-
-        
-        
+                # if the player has a shieldBuble, draw it
+                if player.shieldBubble != None:
+                    allSprites.add(player.shieldBubble)
+                    
+                # allow bullets to have collision with walls
+                for bullet in player.weapon.bulletList:
+                    bullet.collisionDetection(mapSprites, players, player.weapon.bulletList)
+     
         if debug:
+             # put ammo count as black text top right
+            
+
             # make it so its based on how many players there are and put it into list
             p1Name = font.render("Player 1", True, (150, 0, 0))
-            p1Id = font.render("ID: " + str(players.sprites()[0].id), True, (255, 255, 255))
             p1AmmoText = font.render("Ammo: " + str(players.sprites()[0].weapon.ammo), True, (255, 255, 255))
             p1TextX = font.render("Player X: " + str(players.sprites()[0].rect.x), True, (255, 255, 255))
             p1TextY = font.render("Player Y: " + str(players.sprites()[0].rect.y), True, (255, 255, 255))
@@ -254,7 +282,6 @@ def main():
             # if there is a second player, add the debug text for player 2, and then for player 3 if there is a third player
             if len(players) > 1:
                 p2Name = font.render("Player 2", True, (0, 0, 150))
-                p2Id = font.render("ID: " + str(players.sprites()[1].id), True, (255, 255, 255))
                 p2AmmoText = font.render("Ammo: " + str(players.sprites()[1].weapon.ammo), True, (255, 255, 255))
                 p2TextX = font.render("Player X: " + str(players.sprites()[1].rect.x), True, (255, 255, 255))
                 p2TextY = font.render("Player Y: " + str(players.sprites()[1].rect.y), True, (255, 255, 255))
@@ -267,7 +294,6 @@ def main():
 
                 if len(players) > 2:
                     p3Name = font.render("Player 3", True, (0, 150, 0))
-                    p3Id = font.render("ID: " + str(players.sprites()[2].id), True, (255, 255, 255))
                     p3AmmoText = font.render("Ammo: " + str(players.sprites()[2].weapon.ammo), True, (255, 255, 255))
                     p3TextX = font.render("Player X: " + str(players.sprites()[2].rect.x), True, (255, 255, 255))
                     p3TextY = font.render("Player Y: " + str(players.sprites()[2].rect.y), True, (255, 255, 255))
@@ -278,13 +304,6 @@ def main():
                     p3TextCanLatch = font.render("Can Latch: " + str(players.sprites()[2].canLatch), True, (255, 255, 255))
                     p3TextIsLatched = font.render("Is Latched: " + str(players.sprites()[2].latching), True, (255, 255, 255))
             
-                
-
-
-
-                    
-
-
         # for every physics object, call their internal function: runtimeGravity
         for physicsObject in physicsObjects:
             physicsObject.runtimeGravity(mapSprites)
@@ -311,7 +330,6 @@ def main():
         # draw the debug text
         if debug:
             screen.blit(p1Name, (1000, 20))
-            screen.blit(p1Id, (1000, 240))
             screen.blit(p1AmmoText, (1000, 40))
             screen.blit(p1TextX, (1000, 60))
             screen.blit(p1TextY, (1000, 80))
@@ -324,7 +342,6 @@ def main():
 
             if len(players) > 1:
                 # same height other side of screen
-                screen.blit(p2Id, (20, 240))
                 screen.blit(p2Name, (20, 20))
                 screen.blit(p2AmmoText, (20, 40))
                 screen.blit(p2TextX, (20, 60))
@@ -338,7 +355,6 @@ def main():
 
                 if len(players) > 2:
                     # same height other side of screen
-                    screen.blit(p3Id, (20, 480))
                     screen.blit(p3Name, (20, 260))
                     screen.blit(p3AmmoText, (20, 280))
                     screen.blit(p3TextX, (20, 300))
@@ -358,16 +374,18 @@ def main():
     # Close the game window
     pygame.quit()
 
-if debug:
-    # using raw text string to print askii art
-    print(r"""   ______                    ______                                 
+
+# using raw text string to print askii art
+print(r"""   ______                    ______                                 
  .' ___  |                  |_   _ `.                               
 / .'   \_| __   _   _ .--.    | | `. \  .--.   _   _   __  _ .--.   
 | |   ____[  | | | [ `.-. |   | |  | |/ .'`\ \[ \ [ \ [  ][ `.-. |  
 \ `.___]  || \_/ |, | | | |  _| |_.' /| \__. | \ \/\ \/ /  | | | |  
  `._____.' '.__.'_/[___||__]|______.'  '.__.'   \__/\__/  [___||__] 
                                                                     """)
-    print("Gundown - " + version + " - Debug: " + str(debug))
+print("Gundown by Nick S- " + version + " - Debug: " + str(debug))
+if debug:
     print("Hello! If you are seeing this, debug mode is enabled. You may turn it off by setting debug to False in main.py")
     print("Debug mode will display player stats, such as ammo, health, and position on screen")
+
 main()

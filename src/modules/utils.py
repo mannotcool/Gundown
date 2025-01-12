@@ -31,9 +31,9 @@ def generalizedRespawn(players):
                 player.respawnPlayerAtCords(1140, 100)
 
 class Colors():
-    red = (255, 179, 186)
-    orange = (255, 223, 186)
-    yellow = (255, 255, 186)
-    green = (186, 255, 201)
-    blue = (186, 225, 255)
-    purple = (227, 218, 255)
+    red = (255, 103, 117)
+    orange = (255, 188, 110)
+    yellow = (255, 255, 135)
+    green = (135,255,161)
+    blue = (110,192,255)
+    purple = (188,167,255)

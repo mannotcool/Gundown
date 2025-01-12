@@ -20,7 +20,13 @@ class HealthBar(pygame.sprite.Sprite):
 
         # drawing it the on the right side
         redRectBar = pygame.Rect(self.player.rect.width - redWidth, 0, redWidth, 6)
-        pygame.draw.rect(self.image, (255, 0, 0), redRectBar)
+
+        # if is dead, make it grey
+        if self.player.isDead:
+            self.image.set_alpha(0)
+        else:
+            self.image.set_alpha(255)
+            pygame.draw.rect(self.image, (255, 0, 0), redRectBar)
 
         # and updating the position to follow the player
         self.rect.center = (self.player.rect.centerx, self.player.rect.top - 10)
@@ -66,10 +72,42 @@ class BulletBar(pygame.sprite.Sprite):
             y = row * (self.bulletSize + self.spacing)
 
             # if the player is reloading, draw the bullets in grey
-            if self.player.weapon.isReloading:
-                pygame.draw.rect(self.image, (100, 100, 100), (x, y, self.bulletSize, self.bulletSize))
+            # but first check if player is dead
+            if self.player.isDead:
+                self.image.set_alpha(0)
             else:
-                pygame.draw.rect(self.image, (255, 166, 43), (x, y, self.bulletSize, self.bulletSize)) # orange-ish bullet
+                self.image.set_alpha(255)
+                if self.player.weapon.isReloading:
+                    pygame.draw.rect(self.image, (100, 100, 100), (x, y, self.bulletSize, self.bulletSize))
+                else:
+                    pygame.draw.rect(self.image, (255, 166, 43), (x, y, self.bulletSize, self.bulletSize)) # orange-ish bullet
 
         # bullet bar above the health bar
         self.rect.center = (self.player.rect.centerx, self.player.rect.top - 20 - self.imageH // 2)
+
+# Scorekeeper stores player score, and displays in the top left corner as squares
+class ScoreKeeper(pygame.sprite.Sprite):
+    def __init__(self, screen, player):
+        pygame.sprite.Sprite.__init__(self)
+        self.window = screen
+        self.player = player
+        self.numSquares = 3
+        self.squareSize = 10
+        self.largeSize = 30
+        self.spacing = 20
+        self.color = player.colorScheme
+        self.imageWidth = self.numSquares * self.largeSize + (self.numSquares - 1) * self.spacing
+        self.imageHeight = self.largeSize
+        self.image = pygame.Surface((self.imageWidth, self.imageHeight))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (10, 10)
+
+    def update(self):
+        self.score = self.player.score
+        self.image.fill((0, 0, 0))
+        self.image.set_alpha(200)
+        for i in range(self.numSquares):
+            size = self.largeSize if i < self.score else self.squareSize
+            x = i * (self.largeSize + self.spacing)
+            y = (self.imageHeight - size) // 2
+            pygame.draw.rect(self.image, self.color, (x, y, size, size))

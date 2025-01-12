@@ -1,7 +1,7 @@
 # I - Import
 import pygame # type: ignore
 
-from src.modules import mapManager, entities, utils
+from src.modules import mapManager, entities, utils, gui
 
 """
 GENERAL NOTES:
@@ -153,13 +153,19 @@ def main():
     # make a box that you can walk through
     # box_walkthrough = character_sprites.StaticMapObject(screen, 600, 400, 50, 50, (200, 0, 0), 100, "solid", False, False, 1, True)
 
+    players = pygame.sprite.Group()
+    # create a player sprite object from our mySprites module
+    players.add(entities.Player(screen, 100, 100, "mouse", utils.Colors.purple))
     
-
-
-
-
-
-
+    # pick up all game controllers that exist and create a player for each one
+    # check if there is a controller available
+    joystick_count = pygame.joystick.get_count()
+    if joystick_count > 0:
+        # add them do not set players yet
+        for i in range(joystick_count):
+            # initalize and add the joystick
+            players.add(entities.Player(screen, 100, 100, "controller", utils.Colors.purple, pygame.joystick.Joystick(i)))
+            
 
     # create a sprite group for all physics objects
     mapSprites = pygame.sprite.Group(decorative_pillars, left_wall, right_wall, floor, physicsObjects)
@@ -168,14 +174,15 @@ def main():
 
     # PLAYERS
 
-    players = pygame.sprite.Group()
-    # create a player sprite object from our mySprites module
-    players.add(entities.Player(screen, 100, 100, "mouse", utils.Colors.purple))
+
+
+    scoreKeeper1 = gui.ScoreKeeper(screen, players.sprites()[0])
 
 
 
     # add all sprites include the player, weapon, bullets, and map sprites to the allSprites group
     allSprites = pygame.sprite.OrderedUpdates(mapSprites, players)
+    allSprites.add(scoreKeeper1)
 
     # for each player, append their weapon to the allSprites group
     for player in players:
@@ -203,16 +210,6 @@ def main():
         
 
 
-        # if the L button is pressed, add 1 more player for a max of 2 players
-        if pygame.key.get_pressed()[pygame.K_l] and len(players) < 2:
-            players.add(entities.Player(screen, 100, 100, "controller", (255, 255, 0)))
-            allSprites.add(players)
-            # add the new player's weapon to the allSprites group
-            for player in players:
-                # check if the players weapon is already in the allSprites group
-                if player.weapon not in allSprites:
-                    allSprites.add(player.weapon)
-
         # scan to see if a controller is detected and switch to controller if so 
         joystick_count = pygame.joystick.get_count()
 
@@ -222,10 +219,9 @@ def main():
 
             # check if player is controller or mouse
             if player.controlScheme == "controller":
-                    if joystick_count > 0:
-                        joystick = pygame.joystick.Joystick(0)
-                        joystick.init()
-                        player.runTimeJoyMovement(joystick, mapSprites)
+                if player.joyStick != None:
+                    player.joyStick.init()
+                    player.runTimeJoyMovement(player.joyStick, mapSprites)
             else:
                 player.runTimeMnkMovement(mapSprites)
 
@@ -256,7 +252,7 @@ def main():
             p1TextCanLatch = font.render("Can Latch: " + str(players.sprites()[0].canLatch), True, (255, 255, 255))
             p1TextIsLatched = font.render("Is Latched: " + str(players.sprites()[0].latching), True, (255, 255, 255))
 
-            # if there is a second player, add the debug text for player 2
+            # if there is a second player, add the debug text for player 2, and then for player 3 if there is a third player
             if len(players) > 1:
                 p2Name = font.render("Player 2", True, (0, 0, 150))
                 p2Id = font.render("ID: " + str(players.sprites()[1].id), True, (255, 255, 255))
@@ -269,17 +265,26 @@ def main():
                 p2TextIsReloading = font.render("Is Reloading: " + str(players.sprites()[1].weapon.isReloading), True, (255, 255, 255))
                 p2TextCanLatch = font.render("Can Latch: " + str(players.sprites()[1].canLatch), True, (255, 255, 255))
                 p2TextIsLatched = font.render("Is Latched: " + str(players.sprites()[1].latching), True, (255, 255, 255))
+
+                if len(players) > 2:
+                    p3Name = font.render("Player 3", True, (0, 150, 0))
+                    p3Id = font.render("ID: " + str(players.sprites()[2].id), True, (255, 255, 255))
+                    p3AmmoText = font.render("Ammo: " + str(players.sprites()[2].weapon.ammo), True, (255, 255, 255))
+                    p3TextX = font.render("Player X: " + str(players.sprites()[2].rect.x), True, (255, 255, 255))
+                    p3TextY = font.render("Player Y: " + str(players.sprites()[2].rect.y), True, (255, 255, 255))
+                    p3TextDirection = font.render("Direction: " + str(players.sprites()[2].direction), True, (255, 255, 255))
+                    p3TextGunType = font.render("Gun Type: " + str(players.sprites()[2].weapon.weaponName), True, (255, 255, 255))
+                    p3TextHealth = font.render("Health: " + str(players.sprites()[2].Health), True, (255, 255, 255))
+                    p3TextIsReloading = font.render("Is Reloading: " + str(players.sprites()[2].weapon.isReloading), True, (255, 255, 255))
+                    p3TextCanLatch = font.render("Can Latch: " + str(players.sprites()[2].canLatch), True, (255, 255, 255))
+                    p3TextIsLatched = font.render("Is Latched: " + str(players.sprites()[2].latching), True, (255, 255, 255))
+            
                 
-        
-        # make bold green or red text depending on if control scheme is controller or mouse and give it a bit more space "Using Controller" "Using MnK"
-        if player.controlScheme == "controller":
-            p1TextControlScheme = font.render("Using Controller", True, (0, 255, 0))
-            if len(players) > 1:
-                p2TextControlScheme = font.render("Using Controller", True, (0, 255, 0))
-        else:
-            p1TextControlScheme = font.render("Using MnK", True, (255, 0, 0))
-            if len(players) > 1:
-                p2TextControlScheme = font.render("Using MnK", True, (255, 0, 0))
+
+
+
+                    
+
 
         # for every physics object, call their internal function: runtimeGravity
         for physicsObject in physicsObjects:
@@ -289,9 +294,7 @@ def main():
         for player in players:
             # check if player is dead
             if player.Health <= 0:
-                player.kill()
-                # kill the gun
-                player.weapon.kill()
+                player.isDead = True
                 print("Player is dead")
 
             # the reload complete method checks if the reload time has passed and if so, sets the ammo back to the max
@@ -318,7 +321,6 @@ def main():
             screen.blit(p1TextGunType, (1000, 120))
             screen.blit(p1TextHealth, (1000, 140))
             screen.blit(p1TextIsReloading, (1000, 160))
-            screen.blit(p1TextControlScheme, (1000, 180))
             screen.blit(p1TextCanLatch, (1000, 200))
             screen.blit(p1TextIsLatched, (1000, 220))
 
@@ -335,12 +337,26 @@ def main():
                 screen.blit(p2TextIsReloading, (20, 160))
                 screen.blit(p2TextCanLatch, (20, 200))
                 screen.blit(p2TextIsLatched, (20, 220))
-                screen.blit(p2TextControlScheme, (20, 180))
+
+                if len(players) > 2:
+                    # same height other side of screen
+                    screen.blit(p3Id, (20, 480))
+                    screen.blit(p3Name, (20, 260))
+                    screen.blit(p3AmmoText, (20, 280))
+                    screen.blit(p3TextX, (20, 300))
+                    screen.blit(p3TextY, (20, 320))
+                    screen.blit(p3TextDirection, (20, 340))
+                    screen.blit(p3TextGunType, (20, 360))
+                    screen.blit(p3TextHealth, (20, 380))
+                    screen.blit(p3TextIsReloading, (20, 400))
+                    screen.blit(p3TextCanLatch, (20, 440))
+                    screen.blit(p3TextIsLatched, (20, 420))
+
 
 
         allSprites.update()              # Update all sprites
         allSprites.draw(screen)          # Draw all sprites
-        screen.blit(crosshair, pygame.mouse.get_pos())
+        screen.blit(crosshair, pygame.mouse.get_pos()) # draw the crosshair on top of everything
         pygame.display.flip()            # Flip the display
     
     # Close the game window

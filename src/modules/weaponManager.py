@@ -4,9 +4,10 @@ import math
 from . import entities
 
 class WeaponBase(pygame.sprite.Sprite):
-    def __init__(self, screen, x, y):
+    def __init__(self, screen, x, y, player):
         pygame.sprite.Sprite.__init__(self)
         self.window = screen
+        self.player = player
         self.image = None
         self.rect = None
         self.damage = 0
@@ -57,7 +58,7 @@ class WeaponBase(pygame.sprite.Sprite):
                 # use the arc tan function to get the angle between the player and the mouse
                 angle = math.degrees(math.atan2(mouse_y - self.weaponY, mouse_x - self.weaponX))
             elif self.controlScheme == "controller":
-                joystick = pygame.joystick.Joystick(0)
+                joystick = self.player.joyStick
                 joystick.init()
                 rightStickX = joystick.get_axis(2)  # Rjoystick horizontal
                 rightStickY = joystick.get_axis(3)  # Rjoystick vertical
@@ -87,7 +88,7 @@ class WeaponBase(pygame.sprite.Sprite):
 
 # bullets are entities that move in a straight line with a little bit of gravity and rotation
 class Bullet(entities.Entity):
-    def __init__(self, screen, x, y, direction, speed, bulletShotTime, damage):
+    def __init__(self, screen, x, y, direction, speed, bulletShotTime, damage, bulletTimeProtection=True):
         entities.Entity.__init__(self, screen)
         self.window = screen
 
@@ -111,6 +112,7 @@ class Bullet(entities.Entity):
         
         self.x = x
         self.y = y
+        self.bulletTimeProtection = bulletTimeProtection
 
         self.bulletCastTime = bulletShotTime # used to prevent player from getting hit by their own bullets
 
@@ -171,7 +173,7 @@ class Bullet(entities.Entity):
                     self.kill()
 
             if pygame.sprite.collide_rect(self, player):
-                if pygame.time.get_ticks() - self.bulletCastTime > 40:
+                if pygame.time.get_ticks() - self.bulletCastTime > 30 or self.bulletTimeProtection == False:
                     print("player hit")
                     player.Health -= self.damage
                     self.kill()
@@ -187,7 +189,7 @@ class Bullet(entities.Entity):
 class BasicPistol(WeaponBase):
     def __init__(self, screen, player):
         # pass the player reference to the weaponbase
-        WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery)
+        WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)
         self.player = player  # store the reference to the player who wields the weapon
         self.weaponName = "Pistol"
 
@@ -234,7 +236,7 @@ class BasicPistol(WeaponBase):
             # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
             angle = math.degrees(math.atan2(mouse_y - self.weaponY, mouse_x - self.weaponX))
         elif self.controlScheme == "controller":
-            joystick = pygame.joystick.Joystick(0)
+            joystick = self.player.joyStick
             joystick.init()
 
             rStickX = joystick.get_axis(2)  # Rjoy horizontal
@@ -271,6 +273,13 @@ class BasicPistol(WeaponBase):
 
         # update the image and rectbox for positioning
         self.image = rotatedImage
+
+        # if player is dead, hide the weapon
+        if self.player.isDead:
+            self.image.set_alpha(0)
+        else:
+            self.image.set_alpha(255)
+
         rotatedRect = self.image.get_rect()
 
         # update the rectbox to actively circle around the player's position
@@ -280,7 +289,7 @@ class BasicPistol(WeaponBase):
 class AssaultRifle(WeaponBase):
     def __init__(self, screen, player):
         # pass the player reference to the weaponbase
-        WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery)
+        WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)
         self.player = player  # store the reference to the player who wields the weapon
         self.weaponName = "Assault Rifle"
 
@@ -327,7 +336,7 @@ class AssaultRifle(WeaponBase):
             # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
             angle = math.degrees(math.atan2(mouse_y - self.weaponY, mouse_x - self.weaponX))
         elif self.controlScheme == "controller":
-            joystick = pygame.joystick.Joystick(0)
+            joystick = self.player.joyStick
             joystick.init()
 
             rStickX = joystick.get_axis(2)  # Rjoy horizontal
@@ -365,6 +374,12 @@ class AssaultRifle(WeaponBase):
         # update the image and rectbox for positioning
         self.image = rotatedImage
         rotatedRect = self.image.get_rect()
+
+        # if player is dead, hide the weapon
+        if self.player.isDead:
+            self.image.set_alpha(0)
+        else:
+            self.image.set_alpha(255)
 
         # update the rectbox to actively circle around the player's position
         self.rect = rotatedRect

@@ -27,10 +27,13 @@ class Entity(pygame.sprite.Sprite):
         
 # Players are called boxies
 class Player(Entity):
-    def __init__(self, screen, x, y, controlScheme, color=utils.Colors.red):
+    def __init__(self, screen, x, y, controlScheme, color=utils.Colors.red, joystick=None):
         Entity.__init__(self, screen)
 
         self.id = random.randint(0, 1000000)
+        self.colorScheme = color
+        self.score = 2
+        self.joyStick = joystick
 
         # show boxie image
         self.image = pygame.image.load("src/art/character/boxie-white/default-51.png").convert_alpha()
@@ -65,6 +68,7 @@ class Player(Entity):
 
         # Define variable where the type is the pistol class
         self.weapon = weaponManager.BasicPistol(screen, self)
+        self.isDead = False
 
     def displayGUI(self, screen):
         playerHealthBar = gui.HealthBar(screen, self)
@@ -124,6 +128,10 @@ class Player(Entity):
     
     # use x and y to keep track of the player's position, and thats the center of the player
     def moveHorizontal(self, x, mapSprites):
+        # if player is dead, then dont allow movement
+        if self.isDead:
+            return
+        
         # Reset the latchable flag to False initially
         self.canLatch = False
 
@@ -154,6 +162,10 @@ class Player(Entity):
 
 
     def moveVertical(self, y, mapSprites):
+        # if player is dead, then dont allow movement
+        if self.isDead:
+            return
+        
         if not self.latching:
             self.rect.top += y
             for sprite in mapSprites:
@@ -176,6 +188,10 @@ class Player(Entity):
             self.y = self.rect.center[1]
 
     def jump(self, mapSprites):
+        # if player is dead, then dont allow movement
+        if self.isDead:
+            return
+        
         self.rect.top += 1
         on_ground = False
         for sprite in mapSprites:
@@ -193,12 +209,22 @@ class Player(Entity):
             self.gravity = -16  # negative gravity for upward motion, see main.py
 
     def weaponFire(self):
+        # if player is dead, then dont allow movement
+        if self.isDead:
+            return
+        
         self.weapon.fire()
 
     def runTimeJoyMovement(self, joystick, mapSprites):
+        # if player is dead, then dont allow movement
+        if self.isDead:
+            return
+
         # add deadzones to axis
         axis0 = joystick.get_axis(0)
         axis1 = joystick.get_axis(1)
+
+        print(axis0, axis1)
 
         # implement deadzone
         if axis0 < 0.1 and axis0 > -0.1:
@@ -292,14 +318,16 @@ class Player(Entity):
                 self.weapon.startReload()
 
     def respawnPlayerAtCords(self, x, y):
-        self.rect.left = x
-        self.rect.top = y
         self.x = x
         self.y = y
-        self.Health = self.MaxHealth
-        # reset ammo
+        self.rect.left = x
+        self.rect.top = y
+        self.Health = self.Max
+        # reset the player's weapon ammo
         self.weapon.ammo = self.weapon.magazineSize
 
+        # fix alpha on weapon
+        self.weapon.image.set_alpha(255)
 
 
     def update(self):
@@ -323,7 +351,13 @@ class Player(Entity):
 
                 # draw the shield bubble from here
                 self.screen.blit(self.shieldBubble.image, self.shieldBubble.rect)
-        
+    
+        # if player is dead, make them invisible
+        if self.isDead:
+            self.image.set_alpha(5)
+        else:
+            self.image.set_alpha(255)
+
         # draw the player's health bar and ammo count
         self.screen.blit(player_health_bar.image, player_health_bar.rect)
         self.screen.blit(player_ammo_count.image, player_ammo_count.rect)

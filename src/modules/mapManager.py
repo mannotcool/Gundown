@@ -102,8 +102,8 @@ class StaticMapObject(MapObject):
         else:
             self.blownUp = True
 
-            for i in range(0, 360, 15):
-                bullet = Bullet(self.window, self.rect.centerx, self.rect.centery, i, bulletSpeed, pygame.time.get_ticks(), damage)
+            for i in range(0, 360, 10):
+                bullet = Bullet(self.window, self.rect.centerx, self.rect.centery, i, bulletSpeed, pygame.time.get_ticks(), damage, False)
                 bulletList.add(bullet)
             
             self.kill()

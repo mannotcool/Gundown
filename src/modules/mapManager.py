@@ -72,28 +72,41 @@ class StaticMapObject(MapObject):
                     self.verticalVelocity = 0  # Stop upward motion
         self.y = self.rect.center[1]
 
-    def moveHorizontal(self, x, mapSprites):
-        # use same logic as player to move horizontally, but ignore the player and latchable objects because the player can move map objects
-        self.rect.left += x
+    def moveHorizontal(self, x, mapSprites, movedSprites=None):
+        if x == 0:  # no movement so dont run it
+            return
+
+        if movedSprites is None:
+            movedSprites = []  # initialize the list of already moved sprites
+
+        if self in movedSprites:
+            return  # Prevent infinite recursion by skipping already processed sprites
+
+        movedSprites.append(self)  # Mark this sprite as processed
+        self.rect.left += x  # Update the position
+
         for sprite in mapSprites:
             if sprite != self and pygame.sprite.collide_rect(self, sprite):
-                if x < 0:
-                    # if it interacts with a map object thats decorative, ignore
-                    if sprite.decorative:
-                        continue
+                if sprite.decorative:  # decorative objects shouldnt have collision
+                    continue
 
+                if x < 0:  # obj moving left
                     if sprite.affectedByGravity:
-                        sprite.moveHorizontal(x, mapSprites)
-                    else:
+                        # allow for the sprite to move
+                        sprite.moveHorizontal(x, mapSprites, movedSprites)
+                    else:  # Solid object
                         self.rect.left = sprite.rect.right
-                elif x > 0:
-                    if sprite.decorative:
-                        continue
-
+                        # stop further movement
+                        return  
+                    
+                elif x > 0:  # obj moving right
                     if sprite.affectedByGravity:
-                        sprite.moveHorizontal(x, mapSprites)
-                    else:
+                        sprite.moveHorizontal(x, mapSprites, movedSprites)
+                    else:  # solid object
                         self.rect.right = sprite.rect.left
+                        return 
+
+        # update the center position to ensure it is accurate
         self.x = self.rect.center[0]
 
     def shootBulletsAllDirections(self, bulletList, bulletSpeed, damage):

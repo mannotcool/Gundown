@@ -1,7 +1,7 @@
 # I - Import
 import pygame # type: ignore
 
-from src.modules import mapManager, entities, utils, gui
+from src.modules import mapManager, entities, utils, gui, abilityCards
 from src.modules import sceneManager
 
 """
@@ -26,7 +26,7 @@ axis 4 - left trigger
 
 """
 
-version = "0.6.0"
+version = "0.8.0.1"
 
 # enables text debug on screen
 debug = False
@@ -141,6 +141,7 @@ def main():
 
     # create the players with the colors selected
 
+    deadPlayers = []
 
     players = pygame.sprite.Group()
     # create a player sprite object from our mySprites module
@@ -185,7 +186,7 @@ def main():
     
     # A - Assign values to key variables
     clock = pygame.time.Clock()
-    gameIsOver = False
+    disableRespawns = False
     keepGoing = True
 
     # L - Loop
@@ -198,118 +199,48 @@ def main():
             if event.type == pygame.QUIT:
                 keepGoing = False
 
-        # make the mouse cursor the crosshair
+        # Main game loop
 
         
+        
+
+        # Detect round completion and show the ability card screen
         for player in players:
-            # if there is only 2 players, scan for 1 dead player and award the other player a point
-            if len(players) == 2:
-                if player.isDead:
-                    # award the other player a point
-                    for otherPlayer in players:
-                        if otherPlayer is not player:
-                            otherPlayer.score += 1
-                            # respawn the players
-                            utils.generalizedRespawn(players)
-            elif len(players) == 3:
-                # if there is 3 players, scan for 2 dead players and award the last player a point
-                deadPlayers = 0
-                for player in players:
-                    if player.isDead:
-                        deadPlayers += 1
-                if deadPlayers == 2:
-                    # award the other player a point
-                    for otherPlayer in players:
-                        if not otherPlayer.isDead:
-                            otherPlayer.score += 1
-                            # respawn the players
-                            utils.generalizedRespawn(players)
-               
-                    
+            if player.isDead and player not in deadPlayers:
+                deadPlayers.append(player)
+                
         # scan to see if a controller is detected and switch to controller if so 
         joystick_count = pygame.joystick.get_count()
         font = pygame.font.SysFont("Arial", 16)
-        
-        if gameIsOver:
-            # if the game is over, display the winner which should be a person with 3 points
-            for player in players:
-                if player.score == 3:
-                    winnerText = font.render("Player " + str(players.sprites().index(player) + 1) + " wins!", True, player.colorScheme)
-                    screen.blit(winnerText, (640 - winnerText.get_width() // 2, 360 - winnerText.get_height() // 2))
-                    
-                    pygame.display.flip()
 
+        # respawn system
+        if len(deadPlayers) == (len(players) - 1) and disableRespawns == False:
+            deadPlayers = utils.deathHandler(deadPlayers, players, sceneManager, screen, allSprites, abilityCards)
+
+        # runtime manager
         for player in players:
-            # check player score to see if its 3 and if so, end the game
-            if player.score == 3 and not gameIsOver:
-                gameIsOver = True
+            if player.score == 3:
+                disableRespawns = True
+
+            # gravity logic
+            player.runTimeGravityManager(mapSprites)
+
+            # check if player is controller or mouse
+            if player.controlScheme == "controller":
+                if player.joyStick != None:
+                    player.joyStick.init()
+                    player.runTimeJoyMovement(player.joyStick, mapSprites)
             else:
-                # gravity logic
-                player.runTimeGravityManager(mapSprites)
+                player.runTimeMnkMovement(mapSprites)
 
-                # check if player is controller or mouse
-                if player.controlScheme == "controller":
-                    if player.joyStick != None:
-                        player.joyStick.init()
-                        player.runTimeJoyMovement(player.joyStick, mapSprites)
-                else:
-                    player.runTimeMnkMovement(mapSprites)
-
-                # if the player has a shieldBuble, draw it
-                if player.shieldBubble != None:
-                    allSprites.add(player.shieldBubble)
-                    
-                # allow bullets to have collision with walls
-                for bullet in player.weapon.bulletList:
-                    bullet.collisionDetection(mapSprites, players, player.weapon.bulletList)
-     
-        if debug:
-             # put ammo count as black text top right
-            
-
-            # make it so its based on how many players there are and put it into list
-            p1Name = font.render("Player 1", True, (150, 0, 0))
-            p1AmmoText = font.render("Ammo: " + str(players.sprites()[0].weapon.ammo), True, (255, 255, 255))
-            p1TextX = font.render("Player X: " + str(players.sprites()[0].rect.x), True, (255, 255, 255))
-            p1TextY = font.render("Player Y: " + str(players.sprites()[0].rect.y), True, (255, 255, 255))
-            p1TextDirection = font.render("Direction: " + str(players.sprites()[0].direction), True, (255, 255, 255))
-            p1TextGunType = font.render("Gun Type: " + str(players.sprites()[0].weapon.weaponName), True, (255, 255, 255))
-            p1TextHealth = font.render("Health: " + str(players.sprites()[0].Health), True, (255, 255, 255))
-            p1TextIsReloading = font.render("Is Reloading: " + str(players.sprites()[0].weapon.isReloading), True, (255, 255, 255))
-            p1TextCanLatch = font.render("Can Latch: " + str(players.sprites()[0].canLatch), True, (255, 255, 255))
-            p1TextIsLatched = font.render("Is Latched: " + str(players.sprites()[0].latching), True, (255, 255, 255))
-
-            # if there is a second player, add the debug text for player 2, and then for player 3 if there is a third player
-            if len(players) > 1:
-                p2Name = font.render("Player 2", True, (0, 0, 150))
-                p2AmmoText = font.render("Ammo: " + str(players.sprites()[1].weapon.ammo), True, (255, 255, 255))
-                p2TextX = font.render("Player X: " + str(players.sprites()[1].rect.x), True, (255, 255, 255))
-                p2TextY = font.render("Player Y: " + str(players.sprites()[1].rect.y), True, (255, 255, 255))
-                p2TextDirection = font.render("Direction: " + str(players.sprites()[1].direction), True, (255, 255, 255))
-                p2TextGunType = font.render("Gun Type: " + str(players.sprites()[1].weapon.weaponName), True, (255, 255, 255))
-                p2TextHealth = font.render("Health: " + str(players.sprites()[1].Health), True, (255, 255, 255))
-                p2TextIsReloading = font.render("Is Reloading: " + str(players.sprites()[1].weapon.isReloading), True, (255, 255, 255))
-                p2TextCanLatch = font.render("Can Latch: " + str(players.sprites()[1].canLatch), True, (255, 255, 255))
-                p2TextIsLatched = font.render("Is Latched: " + str(players.sprites()[1].latching), True, (255, 255, 255))
-
-                if len(players) > 2:
-                    p3Name = font.render("Player 3", True, (0, 150, 0))
-                    p3AmmoText = font.render("Ammo: " + str(players.sprites()[2].weapon.ammo), True, (255, 255, 255))
-                    p3TextX = font.render("Player X: " + str(players.sprites()[2].rect.x), True, (255, 255, 255))
-                    p3TextY = font.render("Player Y: " + str(players.sprites()[2].rect.y), True, (255, 255, 255))
-                    p3TextDirection = font.render("Direction: " + str(players.sprites()[2].direction), True, (255, 255, 255))
-                    p3TextGunType = font.render("Gun Type: " + str(players.sprites()[2].weapon.weaponName), True, (255, 255, 255))
-                    p3TextHealth = font.render("Health: " + str(players.sprites()[2].Health), True, (255, 255, 255))
-                    p3TextIsReloading = font.render("Is Reloading: " + str(players.sprites()[2].weapon.isReloading), True, (255, 255, 255))
-                    p3TextCanLatch = font.render("Can Latch: " + str(players.sprites()[2].canLatch), True, (255, 255, 255))
-                    p3TextIsLatched = font.render("Is Latched: " + str(players.sprites()[2].latching), True, (255, 255, 255))
-            
-        # for every physics object, call their internal function: runtimeGravity
-        for physicsObject in physicsObjects:
-            physicsObject.runtimeGravity(mapSprites)
-
-
-        for player in players:
+            # if the player has a shieldBuble, draw it
+            if player.shieldBubble != None:
+                allSprites.add(player.shieldBubble)
+                
+            # allow bullets to have collision with walls
+            for bullet in player.weapon.bulletList:
+                bullet.collisionDetection(mapSprites, players, player.weapon.bulletList)
+    
             # check if player is dead
             if player.Health <= 0:
                 player.isDead = True
@@ -323,48 +254,17 @@ def main():
             # allows for reloading of the weapon
             player.update()
             player.weapon.update()
+           
+            # print in bottom right corner if respawns are disabled
+            if disableRespawns:
+                screen.blit(font.render("Respawns Disabled", True, (255, 0, 0)), (1000, 680))
+
+        # for every physics object, call their internal function: runtimeGravity
+        for physicsObject in physicsObjects:
+            physicsObject.runtimeGravity(mapSprites)
 
         # Refresh screen
         screen.blit(background, (0, 0))  # Redraw the full background first
-
-        # draw the debug text
-        if debug:
-            screen.blit(p1Name, (1000, 20))
-            screen.blit(p1AmmoText, (1000, 40))
-            screen.blit(p1TextX, (1000, 60))
-            screen.blit(p1TextY, (1000, 80))
-            screen.blit(p1TextDirection, (1000, 100))
-            screen.blit(p1TextGunType, (1000, 120))
-            screen.blit(p1TextHealth, (1000, 140))
-            screen.blit(p1TextIsReloading, (1000, 160))
-            screen.blit(p1TextCanLatch, (1000, 200))
-            screen.blit(p1TextIsLatched, (1000, 220))
-
-            if len(players) > 1:
-                # same height other side of screen
-                screen.blit(p2Name, (20, 20))
-                screen.blit(p2AmmoText, (20, 40))
-                screen.blit(p2TextX, (20, 60))
-                screen.blit(p2TextY, (20, 80))
-                screen.blit(p2TextDirection, (20, 100))
-                screen.blit(p2TextGunType, (20, 120))
-                screen.blit(p2TextHealth, (20, 140))
-                screen.blit(p2TextIsReloading, (20, 160))
-                screen.blit(p2TextCanLatch, (20, 200))
-                screen.blit(p2TextIsLatched, (20, 220))
-
-                if len(players) > 2:
-                    # same height other side of screen
-                    screen.blit(p3Name, (20, 260))
-                    screen.blit(p3AmmoText, (20, 280))
-                    screen.blit(p3TextX, (20, 300))
-                    screen.blit(p3TextY, (20, 320))
-                    screen.blit(p3TextDirection, (20, 340))
-                    screen.blit(p3TextGunType, (20, 360))
-                    screen.blit(p3TextHealth, (20, 380))
-                    screen.blit(p3TextIsReloading, (20, 400))
-                    screen.blit(p3TextCanLatch, (20, 440))
-                    screen.blit(p3TextIsLatched, (20, 420))
 
         allSprites.update()              # Update all sprites
         allSprites.draw(screen)          # Draw all sprites

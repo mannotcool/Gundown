@@ -1,6 +1,6 @@
 import pygame
 import math
-import random
+
 
 from . import utils
 from . import weaponManager
@@ -43,7 +43,7 @@ class Player(Entity):
         # set the rect of the player to the image
         self.rect = self.image.get_rect()
         self.direction = 2
-        self.speed = 5
+        self.walkSpeed = 10
         self.screen = screen
 
         self.MaxHealth = 100
@@ -65,7 +65,7 @@ class Player(Entity):
         self.lastTimeShieldBubble = 0
 
         # Define variable where the type is the pistol class
-        self.weapon = weaponManager.BasicPistol(screen, self)
+        self.weapon = weaponManager.DesertEagle(screen, self)
         self.isDead = False
 
     def displayGUI(self, screen):
@@ -239,7 +239,7 @@ class Player(Entity):
         # if player is using controller, then set the direction to the controller
         self.direction = self.getDirectionJoy((joystick.get_axis(2), joystick.get_axis(3)))
         
-        self.moveHorizontal(axis0 * 10, mapSprites)
+        self.moveHorizontal(axis0 * self.walkSpeed, mapSprites)
 
         # if player joystick is up, then jump
         if joystick.get_axis(1) < -0.8:
@@ -297,9 +297,9 @@ class Player(Entity):
             self.latching = False
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.moveHorizontal(-10, mapSprites)
+            self.moveHorizontal(-self.walkSpeed, mapSprites)
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.moveHorizontal(10, mapSprites)
+            self.moveHorizontal(self.walkSpeed, mapSprites)
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             self.jump(mapSprites)
         if keys[pygame.K_e]:

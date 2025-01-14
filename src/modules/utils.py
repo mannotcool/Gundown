@@ -37,3 +37,30 @@ class Colors():
     green = (135,255,161)
     blue = (110,192,255)
     purple = (188,167,255)
+
+def deathHandler(deadPlayers, playersAlive, sceneManager, screen, allSprites, abilityCards):
+    # grant 1 score to the player that is not dead
+    for player in playersAlive:
+        if player not in deadPlayers:
+            player.score += 1
+
+        pygame.mouse.set_visible(True)
+
+        # show the ability card screen
+        changedWeapons = sceneManager.showAbilityCardScreen(screen, playersAlive, abilityCards.availableCards)
+
+        # append the player's weapons that are in the changedWeapons list to allsprites
+        for playerWhoseWeaponChanged in changedWeapons:
+            allSprites.add(playerWhoseWeaponChanged.weapon)
+
+        for player in playersAlive:
+            player.isDead = False
+
+        # Respawn players after card selection
+        generalizedRespawn(playersAlive)
+
+        pygame.mouse.set_visible(False)
+        # reset dead Player count
+        return []
+
+            

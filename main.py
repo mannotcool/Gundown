@@ -1,14 +1,15 @@
 # I - Import
 import pygame # type: ignore
 
-from src.modules import mapManager, entities, utils, gui, abilityCards
+from src.modules import entities, utils, gui, abilityCards, weaponManager
 from src.modules import sceneManager
+from src.maps import mapA
 
 """
 GENERAL NOTES:
 
 - The player supports both mouse and controller input
-- Shooting is with space
+- Shooting is with left click
 - Jumping is with w
 
 Controller Button Mapping (xbox one):
@@ -26,10 +27,10 @@ axis 4 - left trigger
 
 """
 
-version = "0.8.0.1"
+version = "0.8.3"
 
-# enables text debug on screen
-debug = False
+# enables certain console logs, turns off background music
+debug = True
 
 def main():
     # I - Initialize
@@ -47,106 +48,29 @@ def main():
 
     # E - Entities (just background for now)
     # make background space.gif in art
-    background = pygame.image.load("src/art/dark_background.gif")
+    background = pygame.image.load("src/art/backgrounds/dark_background.gif")
 
     screen.blit(background, (0,0))
 
     # change mouse cursor to a crosshair
     pygame.mouse.set_visible(False)
     crosshair = pygame.image.load("src/art/hud/cross/crosshair_320.png").convert_alpha()
+
     # add transparency to the crosshair
     crosshair.set_colorkey((0, 0, 0))
     # scale down
     crosshair = pygame.transform.scale(crosshair, (32, 32))
 
-
     # MAP A:
-
-    # border walls
-    left_wall = mapManager.StaticMapObject(screen, -20, 0, 10, 720, (5, 1, 23), 255)
-    right_wall = mapManager.StaticMapObject(screen, 1280, 0, 10, 720, (5, 1, 23), 255)
-
-    floor = mapManager.StaticMapObject(screen, 20, 655, 1240, 20, (60, 60, 255), 255)
-
-    # add decorative pillars below the floor, 6 total evenly spaced
-    decorative_pillars = pygame.sprite.Group()
-
-    for i in range(6):
-        pillar = mapManager.StaticMapObject(screen, 100 + (i * 200), 675, 40, 90, (60, 60, 255), 50, "solid", False, False, 1, True)
-        decorative_pillars.add(pillar)
-
-    # create 2 pillars above the floor, spaced evenly between the first 2 ground pillars of each equivalent side
-    # left pillar
-    left_pillar = mapManager.StaticMapObject(screen, 200, 380, 40, 290, (60, 60, 255), 50, "solid", False, False, 1, True)
-    # right pillar
-    right_pillar = mapManager.StaticMapObject(screen, 1000, 380, 40, 290, (60, 60, 255), 50, "solid", False, False, 1, True)
-    decorative_pillars.add(left_pillar, right_pillar)
-
-    # now add solid blocks on the top of the pillars
-    # left pillar top
-    left_pillar_mid = mapManager.StaticMapObject(screen, 200, 560, 40, 40, (60, 60, 255), 255, "solid", True)
-    # right pillar top
-    right_pillar_mid = mapManager.StaticMapObject(screen, 1000, 560, 40, 40, (60, 60, 255), 255, "solid", True)
-    decorative_pillars.add(left_pillar_mid, right_pillar_mid)
+    importedMap = mapA.MapA(screen)
     
-    # add 2 actual top blocks
-    # left pillar top
-    left_pillar_top = mapManager.StaticMapObject(screen, 130, 360, 180, 20, (60, 60, 255), 255, "solid", True)
-    # right pillar top
-    right_pillar_top = mapManager.StaticMapObject(screen, 930, 360, 180, 20, (60, 60, 255), 255, "solid", True)
-    
-    decorative_pillars.add(left_pillar_top, right_pillar_top)
-
-    # d pillars between the next set of ground pillars inwards from the ones we just created, 4 total evenly spaced, 2 on each side
-    # left pillar
-    left_pillar_2 = mapManager.StaticMapObject(screen, 400, 540, 40, 120, (60, 60, 255), 50, "solid", False, False, 1, True)
-    # right pillar
-    right_pillar_2 = mapManager.StaticMapObject(screen, 800, 540, 40, 120, (60, 60, 255), 50, "solid", False, False, 1, True)
-    
-    # 2 L shapes
-    left_L = mapManager.StaticMapObject(screen, 360, 500, 100, 40, (60, 60, 255), 255, "solid", True)
-    left_L2 = mapManager.StaticMapObject(screen, 440, 460, 40, 80, (60, 60, 255), 255, "solid", True)
-   
-    right_L = mapManager.StaticMapObject(screen, 780, 500, 100, 40, (60, 60, 255), 255, "solid", True)
-    right_L2 = mapManager.StaticMapObject(screen, 760, 460, 40, 80, (60, 60, 255), 255, "solid", True)
-
-
-    decorative_pillars.add(left_L, left_L2, right_L, right_L2)
-    
-
-    decorative_pillars.add(left_pillar_2, right_pillar_2)
-
-    # now add a middle pillar with a platform on top
-    middle_pillar = mapManager.StaticMapObject(screen, 600, 420, 40, 240, (60, 60, 255), 50, "solid", False, False, 1, True)
-    middle_pillar_top = mapManager.StaticMapObject(screen, 540, 410, 160, 20, (60, 60, 255), 255, "solid", True)
-    decorative_pillars.add(middle_pillar, middle_pillar_top)
-
-    # now add 2 movable physics blocks 40 by 40 on each side of the middle pillar exactly
-    left_movable = mapManager.StaticMapObject(screen, 570, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
-    right_movable = mapManager.StaticMapObject(screen, 630, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
-    # put in the middle of the 2 a block that is of type "damage" instead of solid, movable, and 
-    
-    # add a 40,40 block with physics that is in the middle where the floor is so its touching the flor
-    middle_pedestal = mapManager.StaticMapObject(screen, 600, 635, 40, 40, (60, 60, 255), 225, "solid", False)
-    middle_damage = mapManager.StaticMapObject(screen, 600, 500, 40, 40, (255, 60, 60), 225, "damage", False, True, 1)
-
-    decorative_pillars.add(middle_pedestal)
-
-    physicsObjects = pygame.sprite.Group(left_movable, right_movable, middle_damage)
-
-
-
-    # make a box that you can walk through
-    # box_walkthrough = character_sprites.StaticMapObject(screen, 600, 400, 50, 50, (200, 0, 0), 100, "solid", False, False, 1, True)
-
-    # create the players with the colors selected
-
     deadPlayers = []
 
+    # create the players with the colors selected
     players = pygame.sprite.Group()
     # create a player sprite object from our mySprites module
     players.add(entities.Player(screen, 100, 100, "mouse", selectedPlayerColors[0], None))
-    
+
     # pick up all game controllers that exist and create a player for each one
     # check if there is a controller available
     joystick_count = pygame.joystick.get_count()
@@ -155,23 +79,28 @@ def main():
         for i in range(joystick_count):
             # initalize and add the joystick
             players.add(entities.Player(screen, 100, 100, "controller", selectedPlayerColors[i + 1], pygame.joystick.Joystick(i)))
-            
+    
+    # attach pistols onto all the players using attachWeapon
+    for player in players:
+        player.attachWeapon(weaponManager.BasicPistol(screen, player))
 
     # now respawn them:
     utils.generalizedRespawn(players)
+    if debug:
+        print("Number of joysticks connected after respawn: " + str(pygame.joystick.get_count()))
 
     # create a sprite group for all physics objects
-    mapSprites = pygame.sprite.Group(decorative_pillars, left_wall, right_wall, floor, physicsObjects)
-
+    mapSprites = importedMap[0]
+    physicsObjects = importedMap[1]
     # -- END OF MAP --
 
-    # PLAYERS
-
-
+    # PLAYERS:
 
     # for every player, create a scorekeeper object
     scoreKeepers = pygame.sprite.Group()
     for player in players:
+        if debug:
+            print("Creating scorekeeper...")
         # for the index of player, make the location y 10 + 40 * index
         scoreKeepers.add(gui.ScoreKeeper(screen, player, (20, 10 + 40 * players.sprites().index(player))))
 
@@ -199,11 +128,9 @@ def main():
             if event.type == pygame.QUIT:
                 keepGoing = False
 
-        # Main game loop
+        # Main game loop!
 
         
-        
-
         # Detect round completion and show the ability card screen
         for player in players:
             if player.isDead and player not in deadPlayers:
@@ -211,12 +138,26 @@ def main():
                 
         # scan to see if a controller is detected and switch to controller if so 
         joystick_count = pygame.joystick.get_count()
+
+        # initalize fonts
+        pygame.font.init()
         font = pygame.font.SysFont("Arial", 16)
+        pixelArtFont = pygame.font.Font("src/fonts/ThaleahFat.ttf", 96)
 
         # respawn system
-        if len(deadPlayers) == (len(players) - 1) and disableRespawns == False:
-            deadPlayers = utils.deathHandler(deadPlayers, players, sceneManager, screen, allSprites, abilityCards)
-
+        if len(deadPlayers) == (len(players) - 1):
+            if disableRespawns == False:
+                deadPlayers = utils.deathHandler(deadPlayers, players, sceneManager, screen, allSprites, abilityCards)
+                if debug:
+                    print("Respawning players...")
+            else:
+                if debug:
+                    print("Respawns disabled, game over!")
+                # print label Game over in the top middle using custom font, and color of winning player who is still alive
+                for player in players:
+                    if player not in deadPlayers:
+                        screen.blit(pixelArtFont.render("Game Over!", True, player.colorScheme), (600, 10))
+                
         # runtime manager
         for player in players:
             if player.score == 3:
@@ -283,9 +224,6 @@ print(r"""   ______                    ______
 \ `.___]  || \_/ |, | | | |  _| |_.' /| \__. | \ \/\ \/ /  | | | |  
  `._____.' '.__.'_/[___||__]|______.'  '.__.'   \__/\__/  [___||__] 
                                                                     """)
-print("Gundown by Nick S- " + version + " - Debug: " + str(debug))
-if debug:
-    print("Hello! If you are seeing this, debug mode is enabled. You may turn it off by setting debug to False in main.py")
-    print("Debug mode will display player stats, such as ammo, health, and position on screen")
+print("Gundown by Nick S - " + version + " - Debug: " + str(debug))
 
 main()

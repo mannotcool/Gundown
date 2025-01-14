@@ -15,7 +15,7 @@ def showStartScreen(screen):
     footerText = smallFont.render("Change colors by clicking (A), or using Mouse Left Click.", True, (255, 255, 255))
     
     screenWidth, screenHeight = screen.get_size()
-    bg = pygame.image.load("src/art/dark_abs_bg.gif")
+    bg = pygame.image.load("src/art/backgrounds/dark_abs_bg.gif")
     bg = pygame.transform.scale(bg, (screenWidth, screenHeight))
 
     colors = [utils.Colors.red, utils.Colors.blue, utils.Colors.orange, utils.Colors.purple, utils.Colors.green]
@@ -190,7 +190,7 @@ def showAbilityCardScreen(screen, players, availableCards):
     screenWidth, screenHeight = screen.get_size()
 
     # same bg as the start screen
-    bg = pygame.image.load("src/art/dark_abs_bg.gif")
+    bg = pygame.image.load("src/art/backgrounds/dark_abs_bg.gif")
     bg = pygame.transform.scale(bg, (screenWidth, screenHeight))
 
     cardWidth, cardHeight = 400, 150

@@ -2,7 +2,7 @@ import pygame
 from src.modules import mapManager
 
 def MapA(screen):
-        # MAP A:
+    # MAP A:
 
     # border walls
     left_wall = mapManager.StaticMapObject(screen, -20, 0, 10, 720, (5, 1, 23), 255)
@@ -75,6 +75,6 @@ def MapA(screen):
     decorative_pillars.add(middle_pedestal)
 
     physicsObjects = pygame.sprite.Group(left_movable, right_movable, middle_damage)
+    mapSprites = pygame.sprite.Group(decorative_pillars, left_wall, right_wall, floor, physicsObjects)
     
-    return [pygame.sprite.Group(decorative_pillars, left_wall, right_wall, floor, physicsObjects), physicsObjects]
-
+    return [mapSprites, physicsObjects]

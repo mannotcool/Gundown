@@ -40,11 +40,9 @@ class WeaponBase(pygame.sprite.Sprite):
 
     def fire(self):
         if self.isReloading:
-            print("cannot fire while reloading")
             return
 
         if self.ammo <= 0:
-            print("no ammo")
             return
 
         # check if the fire rate has been met
@@ -173,8 +171,12 @@ class Bullet(entities.Entity):
 
             if pygame.sprite.collide_rect(self, player):
                 if pygame.time.get_ticks() - self.bulletCastTime > 30 or self.bulletTimeProtection == False:
-                    player.Health -= self.damage
-                    self.kill()
+                    # bullets shouldn't collide with isDead players
+                    if not player.isDead:
+                        player.Health -= self.damage
+                        self.kill()
+                    
+                    
 
             
 

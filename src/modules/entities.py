@@ -1,9 +1,7 @@
 import pygame
 import math
 
-
 from . import utils
-from . import weaponManager
 from . import gui
 
 class Entity(pygame.sprite.Sprite):
@@ -65,13 +63,16 @@ class Player(Entity):
         self.lastTimeShieldBubble = 0
 
         # Define variable where the type is the pistol class
-        self.weapon = weaponManager.DesertEagle(screen, self)
+        self.weapon = None
         self.isDead = False
 
     def displayGUI(self, screen):
         playerHealthBar = gui.HealthBar(screen, self)
         playerAmmoCount = gui.BulletBar(screen, self)
         return playerHealthBar, playerAmmoCount
+    
+    def attachWeapon(self, weapon):
+        self.weapon = weapon
     
     def createShieldBubble(self):
         # Ensure the cooldown for shield creation is respected
@@ -302,7 +303,7 @@ class Player(Entity):
             self.moveHorizontal(self.walkSpeed, mapSprites)
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             self.jump(mapSprites)
-        if keys[pygame.K_e]:
+        if keys[pygame.K_e] or keys[pygame.K_q]:
             self.createShieldBubble()
         if keys[pygame.K_r]:
             # reload the weapon if the magazine is not the same size as the ammo 
@@ -310,7 +311,7 @@ class Player(Entity):
                 self.weapon.startReload()
             
         # add ability to shoot with spacebar or left mouse button
-        if keys[pygame.K_SPACE] or pygame.mouse.get_pressed()[0]:
+        if pygame.mouse.get_pressed()[0]:
             # fire using the weapon fire method using the x and y of the gun
             if self.weapon.ammo > 0:
                 self.weapon.fire()

@@ -58,6 +58,10 @@ def deathHandler(deadPlayers, players, sceneManager, screen, allSprites, ability
     # undie the rest lul
     for player in players:
         player.isDead = False
+        
+        # go into their weapons and kill every bulletList sprite
+        for bullet in player.weapon.bulletList:
+            bullet.kill()
 
     # Respawn players after card selection
     generalizedRespawn(players)
@@ -67,4 +71,7 @@ def deathHandler(deadPlayers, players, sceneManager, screen, allSprites, ability
     # reset dead Player count
     return []
 
-            
+def shootBulletsAllDirections(self, bulletList, bulletSpeed, damage, ratio=10):
+    for i in range(0, 360, ratio):
+        bullet = self.spawnBullet(i, bulletSpeed, damage)
+        bulletList.add(bullet)

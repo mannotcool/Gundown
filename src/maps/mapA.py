@@ -64,8 +64,8 @@ def MapA(screen):
     decorative_pillars.add(middle_pillar, middle_pillar_top)
 
     # now add 2 movable physics blocks 40 by 40 on each side of the middle pillar exactly
-    left_movable = mapManager.StaticMapObject(screen, 570, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
-    right_movable = mapManager.StaticMapObject(screen, 630, 420, 40, 40, (60, 60, 255), 225, "solid", False, True, 1)
+    left_movable = mapManager.StaticMapObject(screen, 570, 420, 40, 40, (60, 60, 255), 225, "bounce", False, True, 1)
+    right_movable = mapManager.StaticMapObject(screen, 630, 420, 40, 40, (60, 60, 255), 225, "bounce", False, True, 1)
     # put in the middle of the 2 a block that is of type "damage" instead of solid, movable, and 
     
     # add a 40,40 block with physics that is in the middle where the floor is so its touching the flor

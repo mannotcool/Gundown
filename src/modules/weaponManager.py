@@ -2,6 +2,7 @@ import pygame
 import math
 
 from . import entities
+from . import utils
 
 class WeaponBase(pygame.sprite.Sprite):
     def __init__(self, screen, x, y, player):
@@ -28,7 +29,7 @@ class WeaponBase(pygame.sprite.Sprite):
 
     def startReload(self, reloadFx):
         self.lastReloadTime = pygame.time.get_ticks()
-        
+
         # if it hasnt started reloading, then start
         if not self.isReloading:
             reloadFx.play()
@@ -134,6 +135,9 @@ class Bullet(entities.Entity):
         self.x += self.xVelocity
         self.y += self.yVelocity
         self.rect.center = (self.x, self.y)
+    
+    def spawnBullet(self, i, bulletSpeed, damage):
+        return Bullet(self.window, self.rect.centerx, self.rect.centery, i, bulletSpeed, pygame.time.get_ticks(), damage, False)
 
     def collisionDetection(self, mapSprites, players, bulletList):
         # Check if bullet collides with any map sprites
@@ -148,10 +152,15 @@ class Bullet(entities.Entity):
                         self.kill()
                     elif sprite.collisionType == "damage":
                         # shoot bullets in all directions
-                        sprite.shootBulletsAllDirections(bulletList, 25, 33)
-                        self.kill()
+                        if sprite.blownUp:
+                            return
+                        else:
+                            sprite.blownUp = True
+                            utils.shootBulletsAllDirections(self, bulletList, 25, 60)
+                            sprite.kill()
+                            self.kill()
                     elif sprite.collisionType == "bounce":
-                        # Reverse direction on collision
+                        # reverse direction on collision
                         if self.rect.bottom > sprite.rect.top and self.rect.top < sprite.rect.bottom:
                             self.yVelocity = -self.yVelocity  # Vertical bounce
                             # add to bounces
@@ -163,7 +172,27 @@ class Bullet(entities.Entity):
         
         # check if it hits the player and if so, deal damage
         for player in players:
+            # if player has exploading bullets, do the exploading bullets
+            if player.exploadingBullets == True:
+                # only do exploading bullets every 6 irl seconds
+                if pygame.time.get_ticks() - player.exploadingBulletTime > 6000:
+                    if pygame.sprite.collide_rect(self, player):
+                        # set the time of
+                        player.exploadingBulletTime = pygame.time.get_ticks()
+
+                        # if its from your own bullets, ignore
+                        if pygame.time.get_ticks() - self.bulletCastTime < 40:
+                            return
+
+                        # shoot bullets in all directions
+                        utils.shootBulletsAllDirections(self, bulletList, 25, 4, 35)
+                        self.kill()
+                        return
+                else:
+                    "exploading bullets on cooldown"
+
             # check if it his the player shield bubble
+
             if player.shieldBubble:
                 if pygame.sprite.collide_rect(self, player.shieldBubble):
                     # if its from your own bullets, ignore

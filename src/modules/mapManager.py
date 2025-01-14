@@ -1,7 +1,6 @@
 import pygame
 
 from .weaponManager import Bullet
-
         
 class MapObject(pygame.sprite.Sprite):
     # General class for Map Components
@@ -109,19 +108,7 @@ class StaticMapObject(MapObject):
         # update the center position to ensure it is accurate
         self.x = self.rect.center[0]
 
-    def shootBulletsAllDirections(self, bulletList, bulletSpeed, damage):
-        if self.blownUp:
-            return
-        else:
-            self.blownUp = True
-
-            for i in range(0, 360, 10):
-                bullet = Bullet(self.window, self.rect.centerx, self.rect.centery, i, bulletSpeed, pygame.time.get_ticks(), damage, False)
-                bulletList.add(bullet)
-            
-            self.kill()
-            
-        
+      
 
     def update(self):
         MapObject.update(self)

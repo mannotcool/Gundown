@@ -64,6 +64,8 @@ class Modifier(pygame.sprite.Sprite):
             player.weapon.kill()
             player.weapon = weaponManager.SMG(player.screen, player)
             player.weapon.update()  # ensure the new weapon's image shows up
+        elif self.modifierType == "explosive":
+            player.exploadingBullets = True
 
 availableCards = [
     # Base cards
@@ -90,4 +92,7 @@ availableCards = [
     AbilityCardBase("attribute", "Basically a Sniper", "5x damage but horrible Fire rate", [Modifier("damage", 5), Modifier("fireRate", 10)]),
     AbilityCardBase("attribute", "Tank", "5x health but 1/5th speed", [Modifier("health", 5), Modifier("speed", 0.20)]),
     AbilityCardBase("attribute", "Bullet Hell", "5x ammo but 1/5th damage", [Modifier("ammo", 5), Modifier("damage", 0.20)]),
+
+    # exploading bullets
+    AbilityCardBase("attribute", "Explosive Bullets", "Bullets explode on impact", [Modifier("explosive", 0)]),
 ]

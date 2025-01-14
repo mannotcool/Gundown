@@ -65,6 +65,8 @@ class Player(Entity):
         # Define variable where the type is the pistol class
         self.weapon = None
         self.isDead = False
+        self.exploadingBullets = False
+        self.exploadingBulletTime = 0
 
     def displayGUI(self, screen):
         playerHealthBar = gui.HealthBar(screen, self)
@@ -78,11 +80,9 @@ class Player(Entity):
         # Ensure the cooldown for shield creation is respected
         current_time = pygame.time.get_ticks()
         if self.shieldBubble:
-            print("shield already exists")
             return
 
         if current_time - self.lastTimeShieldBubble < 8000:
-            print("shield recently created")
             return
 
         # Create the shield bubble

@@ -1,5 +1,9 @@
-# I - Import
+# I - Import & Initialize
 import pygame # type: ignore
+
+pygame.init()
+pygame.mixer.init()
+pygame.font.init()
 
 from src.modules import entities, utils, gui, abilityCards, weaponManager
 from src.modules import sceneManager
@@ -30,11 +34,9 @@ axis 4 - left trigger
 version = "0.8.3"
 
 # enables certain console logs, turns off background music
-debug = True
+debug = False
 
 def main():
-    # I - Initialize
-    pygame.init()
     
     # D - Display configuration
     screen = pygame.display.set_mode((1280, 720))
@@ -44,13 +46,35 @@ def main():
     if debug:
         print("Number of joysticks connected on boot: " + str(pygame.joystick.get_count()))
 
+
+    # Add background music
+    if debug == False:
+        pygame.mixer.music.load("src/music/pizzatronMusic.ogg")
+        pygame.mixer.music.set_volume(0.3)
+        pygame.mixer.music.play(-1)
+
     selectedPlayerColors = sceneManager.showStartScreen(screen)
 
     # E - Entities (just background for now)
     # make background space.gif in art
     background = pygame.image.load("src/art/backgrounds/dark_background.gif")
-
     screen.blit(background, (0,0))
+
+    # Sounds Effects
+    bellFx = pygame.mixer.Sound("src/sounds/bell.ogg")
+    bellFx.set_volume(0.5)
+
+    selectFx = pygame.mixer.Sound("src/sounds/select_2.ogg")
+    selectFx.set_volume(0.7)
+
+    shieldFx = pygame.mixer.Sound('src/sounds/cast_shield.ogg')
+    shieldFx.set_volume(0.5)
+
+    shotFx = pygame.mixer.Sound('src/sounds/shot.ogg')
+    shotFx.set_volume(0.35)
+
+    reloadFx = pygame.mixer.Sound('src/sounds/reload_gun.ogg')
+    reloadFx.set_volume(0.8)
 
     # change mouse cursor to a crosshair
     pygame.mouse.set_visible(False)
@@ -117,6 +141,10 @@ def main():
     clock = pygame.time.Clock()
     disableRespawns = False
     keepGoing = True
+    gameEnd = False
+
+    # play bell noise because game is starting
+    bellFx.play()
 
     # L - Loop
     while keepGoing:
@@ -140,14 +168,15 @@ def main():
         joystick_count = pygame.joystick.get_count()
 
         # initalize fonts
-        pygame.font.init()
         font = pygame.font.SysFont("Arial", 16)
         pixelArtFont = pygame.font.Font("src/fonts/ThaleahFat.ttf", 96)
 
         # respawn system
         if len(deadPlayers) == (len(players) - 1):
             if disableRespawns == False:
-                deadPlayers = utils.deathHandler(deadPlayers, players, sceneManager, screen, allSprites, abilityCards)
+                deadPlayers = utils.deathHandler(deadPlayers, players, sceneManager, screen, allSprites, abilityCards, selectFx)
+                # play bell noise because game is starting
+                bellFx.play()
                 if debug:
                     print("Respawning players...")
             else:
@@ -156,12 +185,15 @@ def main():
                 # print label Game over in the top middle using custom font, and color of winning player who is still alive
                 for player in players:
                     if player not in deadPlayers:
-                        screen.blit(pixelArtFont.render("Game Over!", True, player.colorScheme), (600, 10))
+                        gameEnd = player.colorScheme
+                        
                 
         # runtime manager
         for player in players:
             if player.score == 3:
-                disableRespawns = True
+                # make sure that the last player alive is also the winner
+                if player not in deadPlayers:
+                    disableRespawns = True
 
             # gravity logic
             player.runTimeGravityManager(mapSprites)
@@ -170,12 +202,13 @@ def main():
             if player.controlScheme == "controller":
                 if player.joyStick != None:
                     player.joyStick.init()
-                    player.runTimeJoyMovement(player.joyStick, mapSprites)
+                    player.runTimeJoyMovement(player.joyStick, mapSprites, shotFx, reloadFx, shieldFx)
             else:
-                player.runTimeMnkMovement(mapSprites)
+                player.runTimeMnkMovement(mapSprites, shotFx, reloadFx, shieldFx)
 
             # if the player has a shieldBuble, draw it
             if player.shieldBubble != None:
+                # play sheildFx
                 allSprites.add(player.shieldBubble)
                 
             # allow bullets to have collision with walls
@@ -209,6 +242,11 @@ def main():
 
         allSprites.update()              # Update all sprites
         allSprites.draw(screen)          # Draw all sprites
+
+        # if gameEnd is true, show the game over screen
+        if gameEnd is not False:
+            screen.blit(pixelArtFont.render("Game Over!", True, gameEnd), (600, 10))
+
         screen.blit(crosshair, pygame.mouse.get_pos()) # draw the crosshair on top of everything
         pygame.display.flip()            # Flip the display
     

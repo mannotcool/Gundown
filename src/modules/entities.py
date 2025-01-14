@@ -74,7 +74,7 @@ class Player(Entity):
     def attachWeapon(self, weapon):
         self.weapon = weapon
     
-    def createShieldBubble(self):
+    def createShieldBubble(self, shieldFx):
         # Ensure the cooldown for shield creation is respected
         current_time = pygame.time.get_ticks()
         if self.shieldBubble:
@@ -87,6 +87,8 @@ class Player(Entity):
 
         # Create the shield bubble
         print("creating shield")
+        shieldFx.play()
+
         self.shieldBubble = ShieldBubble(self.screen, self)
         self.shieldBubble.rect.center = self.rect.center
         self.lastTimeShieldBubble = current_time
@@ -208,22 +210,23 @@ class Player(Entity):
         if on_ground and not self.latching:
             self.gravity = -16  # negative gravity for upward motion, see main.py
 
-    def weaponFire(self):
+    def weaponFire(self, shotFx):
         # if player is dead, then dont allow movement
         if self.isDead:
             return
-        
+
+        # play the shot sound
+        shotFx.play()
         self.weapon.fire()
 
-    def runTimeJoyMovement(self, joystick, mapSprites):
+    def runTimeJoyMovement(self, joystick, mapSprites, shotFx, reloadFx, shieldFx):
         # if player is dead, then dont allow movement
         if self.isDead:
             return
         
         # shield if any trigger is pressed
         if joystick.get_button(9) or joystick.get_button(10):
-            print("shield")
-            self.createShieldBubble()
+            self.createShieldBubble(shieldFx)
 
         # add deadzones to axis
         axis0 = joystick.get_axis(0)
@@ -258,15 +261,15 @@ class Player(Entity):
         if joystick.get_button(2):
             # reload the weapon if the magazine is not the same size as the ammo 
             if self.weapon.ammo < self.weapon.magazineSize:
-                self.weapon.startReload()
+                self.weapon.startReload(reloadFx)
         
         # if the right trigger is pressed, fire the weapon
         right_trigger = joystick.get_axis(5) 
         if right_trigger > 0.5:  # Adjust threshold if needed
             if self.weapon.ammo > 0:
-                self.weapon.fire()
+                self.weapon.fire(shotFx)
             elif not self.weapon.isReloading:
-                self.weapon.startReload()
+                self.weapon.startReload(reloadFx)
         
         # latching with left trigger
         left_trigger = joystick.get_axis(4)
@@ -279,7 +282,7 @@ class Player(Entity):
         else:
             self.latching = False
 
-    def runTimeMnkMovement(self, mapSprites):
+    def runTimeMnkMovement(self, mapSprites, shotFx, reloadFx, shieldFx):
         if self.isDead:
             return
         
@@ -303,20 +306,20 @@ class Player(Entity):
             self.moveHorizontal(self.walkSpeed, mapSprites)
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             self.jump(mapSprites)
-        if keys[pygame.K_e] or keys[pygame.K_q]:
-            self.createShieldBubble()
+        if keys[pygame.K_e]:
+            self.createShieldBubble(shieldFx)
         if keys[pygame.K_r]:
             # reload the weapon if the magazine is not the same size as the ammo 
             if self.weapon.ammo < self.weapon.magazineSize:
-                self.weapon.startReload()
+                self.weapon.startReload(reloadFx)
             
         # add ability to shoot with spacebar or left mouse button
         if pygame.mouse.get_pressed()[0]:
             # fire using the weapon fire method using the x and y of the gun
             if self.weapon.ammo > 0:
-                self.weapon.fire()
+                self.weapon.fire(shotFx)
             elif not self.weapon.isReloading:  # if no ammo and not already reloading
-                self.weapon.startReload()
+                self.weapon.startReload(reloadFx)
 
     def respawnPlayerAtCords(self, x, y):
         self.isDead = False

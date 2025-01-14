@@ -1,10 +1,11 @@
 import pygame
 import random
 from . import utils
+pygame.font.init()
+pygame.mixer.init()
+
 
 def showStartScreen(screen):
-    pygame.font.init()
-
     # load ThaleahFat.ttf for the title text
     font = pygame.font.Font("src/fonts/ThaleahFat.ttf", 96)
     smallFont = pygame.font.SysFont("Arial", 24)
@@ -19,6 +20,7 @@ def showStartScreen(screen):
     bg = pygame.transform.scale(bg, (screenWidth, screenHeight))
 
     colors = [utils.Colors.red, utils.Colors.blue, utils.Colors.orange, utils.Colors.purple, utils.Colors.green]
+
 
     # box used to draw the players preview
     boxWidth = 150
@@ -179,8 +181,7 @@ def showStartScreen(screen):
 
     return resultColors
 
-def showAbilityCardScreen(screen, players, availableCards):
-    pygame.font.init()
+def showAbilityCardScreen(screen, players, availableCards, selectFx):
     font = pygame.font.Font("src/fonts/ThaleahFat.ttf", 48)
     smallFont = pygame.font.SysFont("Arial", 24)
 
@@ -192,6 +193,8 @@ def showAbilityCardScreen(screen, players, availableCards):
     # same bg as the start screen
     bg = pygame.image.load("src/art/backgrounds/dark_abs_bg.gif")
     bg = pygame.transform.scale(bg, (screenWidth, screenHeight))
+
+    selectFx.play()
 
     cardWidth, cardHeight = 400, 150
     cardSpacing = 50
@@ -244,10 +247,11 @@ def showAbilityCardScreen(screen, players, availableCards):
                             if playerY <= cursorY <= playerY + cardHeight:
                                 # add the selected card to Player 1 and remove it from the list
                                 playerSelections[0] = playerCards[0][j]
-
+                                # play the select sound
                                 # remove the card from the list
                                 playerCards[0].pop(1 - j)
                                 playerSelectionsConfirmed += 1
+                                selectFx.play()
 
             # if the player is controller, they can select a card by pressing the A or B button
             for i in range(len(players)):
@@ -257,16 +261,24 @@ def showAbilityCardScreen(screen, players, availableCards):
                         
                         # check for A or B button press
                         if joystick.get_button(0):
+                            selectFx.play()
                             playerSelections[i] = playerCards[i][0]
 
                             # same logic as mnk but i know which card to remove
                             playerCards[i].pop(1)
                             playerSelectionsConfirmed += 1
 
+                            # play the select sound
+                            
+
                         elif joystick.get_button(1):
+                            selectFx.play()
                             playerSelections[i] = playerCards[i][1]
                             playerCards[i].pop(0)
                             playerSelectionsConfirmed += 1
+
+                            # play the select sound
+                            
 
         if playerSelectionsConfirmed == len(players):
             # kill the loop if all cards that need to be selected are selected

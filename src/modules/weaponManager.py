@@ -26,9 +26,13 @@ class WeaponBase(pygame.sprite.Sprite):
         self.isReloading = False
         self.reloadTime = 3000  # reload duration in milliseconds
 
-    def startReload(self):
+    def startReload(self, reloadFx):
         self.lastReloadTime = pygame.time.get_ticks()
-        self.isReloading = True
+        
+        # if it hasnt started reloading, then start
+        if not self.isReloading:
+            reloadFx.play()
+            self.isReloading = True
 
     def checkReloadComplete(self):
         if self.isReloading:
@@ -38,13 +42,14 @@ class WeaponBase(pygame.sprite.Sprite):
                 self.isReloading = False
                 print("reload completed")
 
-    def fire(self):
+    def fire(self, shotFx):
         if self.isReloading:
             return
 
         if self.ammo <= 0:
             return
 
+        
         # check if the fire rate has been met
         if pygame.time.get_ticks() - self.lastFireTime > self.fireRate:
             self.lastFireTime = pygame.time.get_ticks()
@@ -71,6 +76,7 @@ class WeaponBase(pygame.sprite.Sprite):
             bulletShotTime = pygame.time.get_ticks()
             # create a bullet object and add it to the bullet list
             bullet = Bullet(self.window, self.weaponX, self.weaponY, angle, self.bulletSpeed, bulletShotTime, self.damage)
+            shotFx.play()
             self.bulletList.add(bullet)
 
             # subtract ammo

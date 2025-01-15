@@ -45,7 +45,6 @@ def main():
     if debug:
         print("Number of joysticks connected on boot: " + str(pygame.joystick.get_count()))
 
-
     # Add background music
     if debug == False:
         pygame.mixer.music.load("src/music/pizzatronMusic.ogg")

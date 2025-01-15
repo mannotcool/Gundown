@@ -1,5 +1,11 @@
+"""
+    Author: Nick S
+    Date: January 16th, 2025
+    Description: Gundown, version 1.0.0
+"""
+
 # I - Import & Initialize
-import pygame # type: ignore
+import pygame
 
 pygame.init()
 pygame.mixer.init()
@@ -30,35 +36,48 @@ axis 4 - left trigger
 
 """
 
-version = "0.9.0"
+version = "1.0"
 
 # enables certain console logs, turns off background music
 debug = False
 
 def main():
-    
+    """
+        Description:
+        Main runtime game loop for Gundown
+
+        Args:
+        None
+
+        Returns:
+        None
+    """
+
     # D - Display configuration
     screen = pygame.display.set_mode((1280, 720))
     pygame.display.set_caption("Gundown - " + version + " - Debug: " + str(debug))
-    
-    # if debug is on, print number of joysticks connected
-    if debug:
-        print("Number of joysticks connected on boot: " + str(pygame.joystick.get_count()))
 
-    # Add background music
+    # E - Entities
+
+    # initalize fonts
+    font = pygame.font.SysFont("Arial", 16)
+    pixelArtFont = pygame.font.Font("src/fonts/ThaleahFat.ttf", 96)
+
+    # add background music if debug is false, we want music in the start screen
     if debug == False:
         pygame.mixer.music.load("src/music/pizzatronMusic.ogg")
         pygame.mixer.music.set_volume(0.3)
         pygame.mixer.music.play(-1)
 
+    # Scene Manager houses the start screen, and ability card screen. This will return an array with the colors of the players
     selectedPlayerColors = sceneManager.showStartScreen(screen)
 
-    # E - Entities (just background for now)
+
     # make background space.gif in art
     background = pygame.image.load("src/art/backgrounds/dark_background.gif")
     screen.blit(background, (0,0))
 
-    # Sounds Effects
+    # load sounds effects
     bellFx = pygame.mixer.Sound("src/sounds/bell.ogg")
     bellFx.set_volume(0.5)
 
@@ -78,22 +97,32 @@ def main():
     pygame.mouse.set_visible(False)
     crosshair = pygame.image.load("src/art/hud/cross/crosshair_320.png").convert_alpha()
 
-    # add transparency to the crosshair
+    # add transparency to the crosshair & scale down
     crosshair.set_colorkey((0, 0, 0))
-    # scale down
     crosshair = pygame.transform.scale(crosshair, (32, 32))
 
-    # MAP A:
+    # Map A || Returns an array with the map sprites [0] and physics objects [1]
     importedMap = mapA.MapA(screen)
+
+    # create a sprite group for all physics objects
+    mapSprites = importedMap[0]
+    physicsObjects = importedMap[1]
     
+    # PLAYERS:
+
+    # Used to store the dead players, will be used to detect when 1 player is alive and call for the new ability cards
     deadPlayers = []
+    disableRespawns = False
+    gameEnd = False
 
     # create the players with the colors selected
     players = pygame.sprite.Group()
+
     # create a player sprite object from our mySprites module
     players.add(entities.Player(screen, 100, 100, "mouse", selectedPlayerColors[0], None))
 
     # pick up all game controllers that exist and create a player for each one
+    
     # check if there is a controller available
     joystick_count = pygame.joystick.get_count()
     if joystick_count > 0:
@@ -106,23 +135,12 @@ def main():
     for player in players:
         player.attachWeapon(weaponManager.BasicPistol(screen, player))
 
-    # now respawn them:
+    # now respawn them at the correct positions
     utils.generalizedRespawn(players)
-    if debug:
-        print("Number of joysticks connected after respawn: " + str(pygame.joystick.get_count()))
 
-    # create a sprite group for all physics objects
-    mapSprites = importedMap[0]
-    physicsObjects = importedMap[1]
-    # -- END OF MAP --
-
-    # PLAYERS:
-
-    # for every player, create a scorekeeper object
+    # for every player, create a scorekeeper object. its a 3 square bar top left corner with small rects for no points and scaled squares for points
     scoreKeepers = pygame.sprite.Group()
     for player in players:
-        if debug:
-            print("Creating scorekeeper...")
         # for the index of player, make the location y 10 + 40 * index
         scoreKeepers.add(gui.ScoreKeeper(screen, player, (20, 10 + 40 * players.sprites().index(player))))
 
@@ -137,9 +155,7 @@ def main():
     
     # A - Assign values to key variables
     clock = pygame.time.Clock()
-    disableRespawns = False
     keepGoing = True
-    gameEnd = False
 
     # play bell noise because game is starting
     bellFx.play()
@@ -153,29 +169,24 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 keepGoing = False
-
-        # Main game loop!
-
         
-        # Detect round completion and show the ability card screen
+        # scan to see if a controller is newly ocnnected 
+        joystick_count = pygame.joystick.get_count()
+
+        # rounds end when all players are dead except for 1
         for player in players:
             if player.isDead and player not in deadPlayers:
                 deadPlayers.append(player)
-                
-        # scan to see if a controller is detected and switch to controller if so 
-        joystick_count = pygame.joystick.get_count()
 
-        # initalize fonts
-        font = pygame.font.SysFont("Arial", 16)
-        pixelArtFont = pygame.font.Font("src/fonts/ThaleahFat.ttf", 96)
-
-        # respawn system
+        # if all players are dead except for 1, show the ability card screen
         if len(deadPlayers) == (len(players) - 1):
             if disableRespawns == False:
-                # unlock mouse to window
+                # Unlock mouse
                 pygame.event.set_grab(False)
+
                 deadPlayers = utils.deathHandler(deadPlayers, players, sceneManager, screen, allSprites, abilityCards, selectFx)
                 pygame.event.set_grab(True)
+
                 # play bell noise because game is starting
                 bellFx.play()
                 if debug:
@@ -189,9 +200,9 @@ def main():
                         pygame.event.set_grab(False)
                         gameEnd = player.colorScheme
                         
-                
-        # runtime manager
+        # Generalized runtime manager
         for player in players:
+            # see if game needs to end
             if player.score == 3:
                 # make sure that the last player alive is also the winner
                 if player not in deadPlayers:
@@ -202,6 +213,8 @@ def main():
 
             # check if player is controller or mouse
             if player.controlScheme == "controller":
+
+                # if joystick is not none, initalize it and run the movement
                 if player.joyStick != None:
                     player.joyStick.init()
                     player.runTimeJoyMovement(player.joyStick, mapSprites, shotFx, reloadFx, shieldFx)
@@ -240,12 +253,11 @@ def main():
 
         # Refresh screen
         screen.blit(background, (0, 0))  # Redraw the full background first
-
         allSprites.update()              # Update all sprites
         allSprites.draw(screen)          # Draw all sprites
 
         # if gameEnd is true, show the game over screen
-        if gameEnd is not False:
+        if gameEnd is True:
             screen.blit(pixelArtFont.render("Game Over!", True, gameEnd), (560, 10))
 
         screen.blit(crosshair, pygame.mouse.get_pos()) # draw the crosshair on top of everything
@@ -253,7 +265,6 @@ def main():
     
     # Close the game window
     pygame.quit()
-
 
 # using raw text string to print askii art
 print(r"""   ______                    ______                                 
@@ -265,4 +276,5 @@ print(r"""   ______                    ______
                                                                     """)
 print("Gundown by Nick S - " + version + " - Debug: " + str(debug))
 
+# LETS RUN IT
 main()

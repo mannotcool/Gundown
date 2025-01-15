@@ -126,6 +126,9 @@ class Player(Entity):
         # convert the angle to degrees
         angle = angle * (180 / math.pi)
         # return the angle
+
+
+        print(angle)
         return angle
     
     # use x and y to keep track of the player's position, and thats the center of the player

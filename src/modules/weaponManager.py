@@ -26,6 +26,10 @@ class WeaponBase(pygame.sprite.Sprite):
         self.bulletSpeed = 0
         self.isReloading = False
         self.reloadTime = 3000  # reload duration in milliseconds
+        self.controlScheme = player.controlScheme
+        self.handleOffset = 20  # Offset for rotation point
+        self.lastJoystickAngle = 0  # Store the last joystick angle
+        self.flipped = False
 
     def startReload(self, reloadFx):
         self.lastReloadTime = pygame.time.get_ticks()
@@ -50,7 +54,6 @@ class WeaponBase(pygame.sprite.Sprite):
         if self.ammo <= 0:
             return
 
-        
         # check if the fire rate has been met
         if pygame.time.get_ticks() - self.lastFireTime > self.fireRate:
             self.lastFireTime = pygame.time.get_ticks()
@@ -89,6 +92,71 @@ class WeaponBase(pygame.sprite.Sprite):
         self.bulletList.update()
         self.bulletList.draw(self.window)
 
+    def updatePositionAndRotation(self):
+        # always follow the player's position
+        self.weaponX = self.player.rect.centerx
+        self.weaponY = self.player.rect.centery
+
+        # determine the current control scheme from the player
+        self.controlScheme = self.player.controlScheme
+
+        # default to the last joystick angle if the joystick is idle
+        angle = self.lastJoystickAngle  
+
+        if self.controlScheme == "mouse":
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+
+            # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
+            angle = math.degrees(math.atan2(mouse_y - self.weaponY, mouse_x - self.weaponX))
+        elif self.controlScheme == "controller":
+            joystick = self.player.joyStick
+            joystick.init()
+
+            rStickX = joystick.get_axis(2)  # Rjoy horizontal
+            rStickY = joystick.get_axis(3)  # Rjoy vertical
+
+            # subtle deadzones for joystick, prevent drift
+            if rStickX > 0.2 or rStickX < -0.2 or rStickY > 0.2 or rStickY < -0.2:
+                
+                # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
+                angle = math.degrees(math.atan2(rStickY, rStickX))
+                self.lastJoystickAngle = angle
+
+        # adjust flipping based on if the cursor or joy is on the left side of the player
+        if angle > 90 or angle < -90:
+            self.flipped = True
+        else:
+            self.flipped = False
+
+        # rotate the weapon image based on the angle
+        if not self.flipped:
+            rotatedImage = pygame.transform.rotate(self.baseImage, -angle)
+        else:
+            rotatedImage = pygame.transform.rotate(self.baseImage, angle)
+
+        # flip the image or else it looks dumb
+        if self.flipped:
+            rotatedImage = pygame.transform.flip(rotatedImage, False, True)  # Flip horizontally
+
+        # adjust the weapon's horizontal offset so its not in the player
+        if self.flipped:
+            self.weaponX -= self.handleOffset  # Move left for flipped
+        else:
+            self.weaponX += self.handleOffset  # Move right for normal
+
+        # update the image and rectbox for positioning
+        self.image = rotatedImage
+        rotatedRect = self.image.get_rect()
+
+        # if player is dead, hide the weapon
+        if self.player.isDead:
+            self.image.set_alpha(0)
+        else:
+            self.image.set_alpha(255)
+
+        # update the rectbox to actively circle around the player's position
+        self.rect = rotatedRect
+        self.rect.center = (self.weaponX, self.weaponY)
 
 # bullets are entities that move in a straight line with a little bit of gravity and rotation
 class Bullet(entities.Entity):
@@ -210,14 +278,6 @@ class Bullet(entities.Entity):
                     if not player.isDead:
                         player.Health -= self.damage
                         self.kill()
-                    
-                    
-
-            
-
-        
-                    
-
 
 # Weapons
 
@@ -236,7 +296,6 @@ class BasicPistol(WeaponBase):
         
         # use it as base as we will rotate it and flip it
         self.image = self.baseImage
-        self.flipped = False
 
         # get the rect of the image to set x and y later
         self.rect = self.image.get_rect()
@@ -247,79 +306,9 @@ class BasicPistol(WeaponBase):
         self.bulletSpeed = 20
         self.damage = 10
         self.ammo = self.magazineSize
-        
-        self.controlScheme = player.controlScheme
-
-        # gun positioning data
-        self.handleOffset = 20  # Offset for rotation point
-        self.lastJoystickAngle = 0  # Store the last joystick angle
 
     def update(self):
-        # always follow the player's position
-        self.weaponX = self.player.rect.centerx
-        self.weaponY = self.player.rect.centery
-
-        # determine the current control scheme from the player
-        self.controlScheme = self.player.controlScheme
-
-        # default to the last joystick angle if the joystick is idle
-        angle = self.lastJoystickAngle  
-
-        if self.controlScheme == "mouse":
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-
-            # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
-            angle = math.degrees(math.atan2(mouse_y - self.weaponY, mouse_x - self.weaponX))
-        elif self.controlScheme == "controller":
-            joystick = self.player.joyStick
-            joystick.init()
-
-            rStickX = joystick.get_axis(2)  # Rjoy horizontal
-            rStickY = joystick.get_axis(3)  # Rjoy vertical
-
-            # subtle deadzones for joystick, prevent drift
-            if rStickX > 0.2 or rStickX < -0.2 or rStickY > 0.2 or rStickY < -0.2:
-                
-                # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
-                angle = math.degrees(math.atan2(rStickY, rStickX))
-                self.lastJoystickAngle = angle
-
-        # adjust flipping based on if the cursor or joy is on the left side of the player
-        if angle > 90 or angle < -90:
-            self.flipped = True
-        else:
-            self.flipped = False
-
-        # rotate the weapon image based on the angle
-        if not self.flipped:
-            rotatedImage = pygame.transform.rotate(self.baseImage, -angle)
-        else:
-            rotatedImage = pygame.transform.rotate(self.baseImage, angle)
-
-        # flip the image or else it looks dumb
-        if self.flipped:
-            rotatedImage = pygame.transform.flip(rotatedImage, False, True)  # Flip horizontally
-
-        # adjust the weapon's horizontal offset so its not in the player
-        if self.flipped:
-            self.weaponX -= self.handleOffset  # Move left for flipped
-        else:
-            self.weaponX += self.handleOffset  # Move right for normal
-
-        # update the image and rectbox for positioning
-        self.image = rotatedImage
-
-        # if player is dead, hide the weapon
-        if self.player.isDead:
-            self.image.set_alpha(0)
-        else:
-            self.image.set_alpha(255)
-
-        rotatedRect = self.image.get_rect()
-
-        # update the rectbox to actively circle around the player's position
-        self.rect = rotatedRect
-        self.rect.center = (self.weaponX, self.weaponY)
+        self.updatePositionAndRotation()
 
 class AssaultRifle(WeaponBase):
     def __init__(self, screen, player):
@@ -336,7 +325,6 @@ class AssaultRifle(WeaponBase):
         
         # use it as base as we will rotate it and flip it
         self.image = self.baseImage
-        self.flipped = False
 
         # get the rect of the image to set x and y later
         self.rect = self.image.get_rect()
@@ -347,78 +335,9 @@ class AssaultRifle(WeaponBase):
         self.bulletSpeed = 30
         self.damage = 15
         self.ammo = self.magazineSize
-        
-        self.controlScheme = player.controlScheme
-
-        # gun positioning data
-        self.handleOffset = 20  # Offset for rotation point
-        self.lastJoystickAngle = 0  # Store the last joystick angle
 
     def update(self):
-        # always follow the player's position
-        self.weaponX = self.player.rect.centerx
-        self.weaponY = self.player.rect.centery
-
-        # determine the current control scheme from the player
-        self.controlScheme = self.player.controlScheme
-
-        # default to the last joystick angle if the joystick is idle
-        angle = self.lastJoystickAngle  
-
-        if self.controlScheme == "mouse":
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-
-            # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
-            angle = math.degrees(math.atan2(mouse_y - self.weaponY, mouse_x - self.weaponX))
-        elif self.controlScheme == "controller":
-            joystick = self.player.joyStick
-            joystick.init()
-
-            rStickX = joystick.get_axis(2)  # Rjoy horizontal
-            rStickY = joystick.get_axis(3)  # Rjoy vertical
-
-            # subtle deadzones for joystick, prevent drift
-            if rStickX > 0.2 or rStickX < -0.2 or rStickY > 0.2 or rStickY < -0.2:
-                
-                # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
-                angle = math.degrees(math.atan2(rStickY, rStickX))
-                self.lastJoystickAngle = angle
-
-        # adjust flipping based on if the cursor or joy is on the left side of the player
-        if angle > 90 or angle < -90:
-            self.flipped = True
-        else:
-            self.flipped = False
-
-        # rotate the weapon image based on the angle
-        if not self.flipped:
-            rotatedImage = pygame.transform.rotate(self.baseImage, -angle)
-        else:
-            rotatedImage = pygame.transform.rotate(self.baseImage, angle)
-
-        # flip the image or else it looks dumb
-        if self.flipped:
-            rotatedImage = pygame.transform.flip(rotatedImage, False, True)  # Flip horizontally
-
-        # adjust the weapon's horizontal offset so its not in the player
-        if self.flipped:
-            self.weaponX -= self.handleOffset  # Move left for flipped
-        else:
-            self.weaponX += self.handleOffset  # Move right for normal
-
-        # update the image and rectbox for positioning
-        self.image = rotatedImage
-        rotatedRect = self.image.get_rect()
-
-        # if player is dead, hide the weapon
-        if self.player.isDead:
-            self.image.set_alpha(0)
-        else:
-            self.image.set_alpha(255)
-
-        # update the rectbox to actively circle around the player's position
-        self.rect = rotatedRect
-        self.rect.center = (self.weaponX, self.weaponY)
+        self.updatePositionAndRotation()
 
 class SMG(WeaponBase):
     def __init__(self, screen, player):
@@ -435,7 +354,6 @@ class SMG(WeaponBase):
         
         # use it as base as we will rotate it and flip it
         self.image = self.baseImage
-        self.flipped = False
 
         # get the rect of the image to set x and y later
         self.rect = self.image.get_rect()
@@ -446,78 +364,9 @@ class SMG(WeaponBase):
         self.bulletSpeed = 20
         self.damage = 6
         self.ammo = self.magazineSize
-        
-        self.controlScheme = player.controlScheme
-
-        # gun positioning data
-        self.handleOffset = 20  # Offset for rotation point
-        self.lastJoystickAngle = 0  # Store the last joystick angle
 
     def update(self):
-        # always follow the player's position
-        self.weaponX = self.player.rect.centerx
-        self.weaponY = self.player.rect.centery
-
-        # determine the current control scheme from the player
-        self.controlScheme = self.player.controlScheme
-
-        # default to the last joystick angle if the joystick is idle
-        angle = self.lastJoystickAngle  
-
-        if self.controlScheme == "mouse":
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-
-            # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
-            angle = math.degrees(math.atan2(mouse_y - self.weaponY, mouse_x - self.weaponX))
-        elif self.controlScheme == "controller":
-            joystick = self.player.joyStick
-            joystick.init()
-
-            rStickX = joystick.get_axis(2)  # Rjoy horizontal
-            rStickY = joystick.get_axis(3)  # Rjoy vertical
-
-            # subtle deadzones for joystick, prevent drift
-            if rStickX > 0.2 or rStickX < -0.2 or rStickY > 0.2 or rStickY < -0.2:
-                
-                # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
-                angle = math.degrees(math.atan2(rStickY, rStickX))
-                self.lastJoystickAngle = angle
-
-        # adjust flipping based on if the cursor or joy is on the left side of the player
-        if angle > 90 or angle < -90:
-            self.flipped = True
-        else:
-            self.flipped = False
-
-        # rotate the weapon image based on the angle
-        if not self.flipped:
-            rotatedImage = pygame.transform.rotate(self.baseImage, -angle)
-        else:
-            rotatedImage = pygame.transform.rotate(self.baseImage, angle)
-
-        # flip the image or else it looks dumb
-        if self.flipped:
-            rotatedImage = pygame.transform.flip(rotatedImage, False, True)  # Flip horizontally
-
-        # adjust the weapon's horizontal offset so its not in the player
-        if self.flipped:
-            self.weaponX -= self.handleOffset  # Move left for flipped
-        else:
-            self.weaponX += self.handleOffset  # Move right for normal
-
-        # update the image and rectbox for positioning
-        self.image = rotatedImage
-        rotatedRect = self.image.get_rect()
-
-        # if the player is dead, then set the transparency to 0
-        if self.player.isDead:
-            self.image.set_alpha(0)
-        else:
-            self.image.set_alpha(255)
-
-        # update the rectbox to actively circle around the player's position
-        self.rect = rotatedRect
-        self.rect.center = (self.weaponX, self.weaponY)
+        self.updatePositionAndRotation()
 
 class DesertEagle(WeaponBase):
     def __init__(self, screen, player):
@@ -534,7 +383,6 @@ class DesertEagle(WeaponBase):
         
         # use it as base as we will rotate it and flip it
         self.image = self.baseImage
-        self.flipped = False
 
         # get the rect of the image to set x and y later
         self.rect = self.image.get_rect()
@@ -545,81 +393,6 @@ class DesertEagle(WeaponBase):
         self.bulletSpeed = 46
         self.damage = 60
         self.ammo = self.magazineSize
-        
-        self.controlScheme = player.controlScheme
-
-        # gun positioning data
-        self.handleOffset = 20  # Offset for rotation point
-        self.lastJoystickAngle = 0  # Store the last joystick angle
 
     def update(self):
-        # always follow the player's position
-        self.weaponX = self.player.rect.centerx
-        self.weaponY = self.player.rect.centery
-
-        # determine the current control scheme from the player
-        self.controlScheme = self.player.controlScheme
-
-        # default to the last joystick angle if the joystick is idle
-        angle = self.lastJoystickAngle  
-
-        if self.controlScheme == "mouse":
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-
-            # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
-            angle = math.degrees(math.atan2(mouse_y - self.weaponY, mouse_x - self.weaponX))
-        elif self.controlScheme == "controller":
-            joystick = self.player.joyStick
-            joystick.init()
-
-            rStickX = joystick.get_axis(2)  # Rjoy horizontal
-            rStickY = joystick.get_axis(3)  # Rjoy vertical
-
-            # subtle deadzones for joystick, prevent drift
-            if rStickX > 0.2 or rStickX < -0.2 or rStickY > 0.2 or rStickY < -0.2:
-                
-                # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
-                angle = math.degrees(math.atan2(rStickY, rStickX))
-                self.lastJoystickAngle = angle
-
-        # adjust flipping based on if the cursor or joy is on the left side of the player
-        if angle > 90 or angle < -90:
-            self.flipped = True
-        else:
-            self.flipped = False
-
-        # rotate the weapon image based on the angle
-        if not self.flipped:
-            rotatedImage = pygame.transform.rotate(self.baseImage, -angle)
-        else:
-            rotatedImage = pygame.transform.rotate(self.baseImage, angle)
-
-        # flip the image or else it looks dumb
-        if self.flipped:
-            rotatedImage = pygame.transform.flip(rotatedImage, False, True)  # Flip horizontally
-
-        # adjust the weapon's horizontal offset so its not in the player
-        if self.flipped:
-            self.weaponX -= self.handleOffset  # Move left for flipped
-        else:
-            self.weaponX += self.handleOffset  # Move right for normal
-
-        # update the image and rectbox for positioning
-        self.image = rotatedImage
-        rotatedRect = self.image.get_rect()
-
-        # if player is dead, hide the weapon
-        if self.player.isDead:
-            self.image.set_alpha(0)
-        else:
-            self.image.set_alpha(255)
-
-        # update the rectbox to actively circle around the player's position
-        self.rect = rotatedRect
-        self.rect.center = (self.weaponX, self.weaponY)
-
-
-
-
-
-
+        self.updatePositionAndRotation()

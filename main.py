@@ -5,8 +5,7 @@ pygame.init()
 pygame.mixer.init()
 pygame.font.init()
 
-from src.modules import entities, utils, gui, abilityCards, weaponManager
-from src.modules import sceneManager
+from src.modules import entities, utils, gui, abilityCards, weaponManager, sceneManager
 from src.maps import mapA
 
 """
@@ -31,7 +30,7 @@ axis 4 - left trigger
 
 """
 
-version = "0.8.3"
+version = "0.9.0"
 
 # enables certain console logs, turns off background music
 debug = False
@@ -174,7 +173,10 @@ def main():
         # respawn system
         if len(deadPlayers) == (len(players) - 1):
             if disableRespawns == False:
+                # unlock mouse to window
+                pygame.event.set_grab(False)
                 deadPlayers = utils.deathHandler(deadPlayers, players, sceneManager, screen, allSprites, abilityCards, selectFx)
+                pygame.event.set_grab(True)
                 # play bell noise because game is starting
                 bellFx.play()
                 if debug:
@@ -185,6 +187,7 @@ def main():
                 # print label Game over in the top middle using custom font, and color of winning player who is still alive
                 for player in players:
                     if player not in deadPlayers:
+                        pygame.event.set_grab(False)
                         gameEnd = player.colorScheme
                         
                 
@@ -227,7 +230,6 @@ def main():
 
             # allows for reloading of the weapon
             player.update()
-            player.weapon.update()
            
             # print in bottom right corner if respawns are disabled
             if disableRespawns:
@@ -245,7 +247,7 @@ def main():
 
         # if gameEnd is true, show the game over screen
         if gameEnd is not False:
-            screen.blit(pixelArtFont.render("Game Over!", True, gameEnd), (600, 10))
+            screen.blit(pixelArtFont.render("Game Over!", True, gameEnd), (560, 10))
 
         screen.blit(crosshair, pygame.mouse.get_pos()) # draw the crosshair on top of everything
         pygame.display.flip()            # Flip the display

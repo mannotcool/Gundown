@@ -216,7 +216,7 @@ def showAbilityCardScreen(screen, players, availableCards, selectFx):
     # A - Assign values to key variables
     clock = pygame.time.Clock()
     keepGoing = True
-    
+    pygame.event.set_grab(False)
     # L - Loop
     while keepGoing:
 

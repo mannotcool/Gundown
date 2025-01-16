@@ -1,25 +1,35 @@
 """
     Author: Nick S
     Date: January 16th, 2025
-    Description: Gundown, version 1.0.0
+    Description: Gundown shooter game, version 1.0.0
 """
-
-# I - Import & Initialize
-import pygame
-
-pygame.init()
-pygame.mixer.init()
-pygame.font.init()
-
-from src.modules import entities, utils, gui, abilityCards, weaponManager, sceneManager
-from src.maps import mapA
 
 """
 GENERAL NOTES:
 
 - The player supports both mouse and controller input
-- Shooting is with left click
-- Jumping is with w
+- The player can have a shield bubble that absorbs damage, use bumpers, down joystick or e
+- Game requires 2 people to play minimum, or you won't get past the start screen (3 player max)
+- Game locks your mouse in game window, use escape to kill the game
+
+=+=
+KEYBOARD CONTROLS:
+Movement: WASD
+Shoot: Left Mouse Button
+Reload: R
+Shield: E
+Latch: Q
+
+CONTROLLER CONTROLS:
+Movement: Left Joystick
+Look Around: Right Joystick
+Shoot: Right Trigger
+Reload: X
+Shield: Bumpers or down joystick
+Latch: Left Trigger
+
+!! ENSURE LOGITECH CONTROLLER IS IN XINPUT MODE !!
+=+=
 
 Controller Button Mapping (xbox one):
 a - 0
@@ -33,13 +43,34 @@ right bumper - 10
 axis 5 - right trigger
 axis 4 - left trigger
 
+Controller Button Mapping (logitech):
+x = 0
+a = 1
+y = 3
+b = 2
+
+left bumper - 5
+right bumper - 4
+
+button 7 - right trigger
+button 6 - left trigger
 
 """
 
-version = "1.0"
+# I - Import & Initialize
+import pygame
+
+pygame.init()
+pygame.mixer.init()
+pygame.font.init()
+
+from src.modules import entities, utils, gui, abilityCards, weaponManager, sceneManager
+from src.maps import mapA
+
+VERSION = "1.0"
 
 # enables certain console logs, turns off background music
-debug = False
+DEBUG = False
 
 def main():
     """
@@ -55,19 +86,23 @@ def main():
 
     # D - Display configuration
     screen = pygame.display.set_mode((1280, 720))
-    pygame.display.set_caption("Gundown - " + version + " - Debug: " + str(debug))
+    pygame.display.set_caption("Gundown - " + VERSION + " - Debug: " + str(DEBUG))
 
     # E - Entities
 
     # add background music if debug is false, we want music in the start screen
-    if debug == False:
+    if DEBUG == False:
         pygame.mixer.music.load("src/music/pizzatronMusic.ogg")
         pygame.mixer.music.set_volume(0.3)
         pygame.mixer.music.play(-1)
 
     # Scene Manager houses the start screen, and ability card screen. This will return an array with the colors of the players
     selectedPlayerColors = sceneManager.showStartScreen(screen)
-
+    
+    # Used to store the dead players, will be used to detect when 1 player is alive and call for the new ability cards
+    deadPlayers = []
+    disableRespawns = False
+    gameEnd = None
 
     # make background space.gif in art
     background = pygame.image.load("src/art/backgrounds/dark_background.gif")
@@ -105,11 +140,6 @@ def main():
     physicsObjects = importedMap[1]
     
     # PLAYERS:
-
-    # Used to store the dead players, will be used to detect when 1 player is alive and call for the new ability cards
-    deadPlayers = []
-    disableRespawns = False
-    gameEnd = None
 
     # create the players with the colors selected
     players = pygame.sprite.Group()
@@ -152,8 +182,9 @@ def main():
     clock = pygame.time.Clock()
     keepGoing = True
 
-    # play bell noise because game is starting
+    # bell + lock your mouse
     bellFx.play()
+    pygame.event.set_grab(True)
 
     # L - Loop
     while keepGoing:
@@ -193,10 +224,10 @@ def main():
                     pygame.event.set_grab(True)
 
                     bellFx.play()
-                    if debug:
+                    if DEBUG:
                         print("Respawning players...")
                 else:
-                    if debug:
+                    if DEBUG:
                         print("Game over")
                 
     
@@ -246,7 +277,6 @@ def main():
         screen.blit(crosshair, pygame.mouse.get_pos()) # draw the crosshair on top of everything
         pygame.display.flip()            # Flip the display
     
-    # Close the game window
     pygame.quit()
 
 # using raw text string to print askii art
@@ -257,6 +287,6 @@ print(r"""   ______                    ______
 \ `.___]  || \_/ |, | | | |  _| |_.' /| \__. | \ \/\ \/ /  | | | |  
  `._____.' '.__.'_/[___||__]|______.'  '.__.'   \__/\__/  [___||__] 
                                                                     """)
-print("Gundown by Nick S - " + version + " - Debug: " + str(debug))
+print("Gundown by Nick S - " + VERSION + " - Debug: " + str(DEBUG))
 
 main()

@@ -103,9 +103,9 @@ class WeaponBase(pygame.sprite.Sprite):
 
             # get control scheme
             if self.controlScheme == "mouse":
-                mouse_x, mouse_y = pygame.mouse.get_pos()
+                mouseX, mouseY = pygame.mouse.get_pos()
                 # use the arc tan function to get the angle between the player and the mouse. virtual triangle some may say 
-                angle = math.degrees(math.atan2(mouse_y - self.weaponY, mouse_x - self.weaponX))
+                angle = math.degrees(math.atan2(mouseY - self.weaponY, mouseX - self.weaponX))
             elif self.controlScheme == "controller":
                 joystick = self.player.joyStick
                 joystick.init()
@@ -163,10 +163,10 @@ class WeaponBase(pygame.sprite.Sprite):
         angle = self.lastJoystickAngle  
 
         if self.controlScheme == "mouse":
-            mouse_x, mouse_y = pygame.mouse.get_pos()
+            mouseX, mouseY = pygame.mouse.get_pos()
 
             # get the angle between the player and the mouse by calculating the arc tan using the x and y, virtually creating a triangle
-            angle = math.degrees(math.atan2(mouse_y - self.weaponY, mouse_x - self.weaponX))
+            angle = math.degrees(math.atan2(mouseY - self.weaponY, mouseX - self.weaponX))
         elif self.controlScheme == "controller":
             joystick = self.player.joyStick
             joystick.init()
@@ -183,7 +183,6 @@ class WeaponBase(pygame.sprite.Sprite):
 
         # adjust flipping based on if the cursor or joy is on the left side of the player
         if angle > 90 or angle < -90:
-            print(angle, "flipped")
             self.flipped = True
         else:
             self.flipped = False
@@ -255,6 +254,14 @@ class Bullet(entities.Entity):
 
 
     def update(self):
+        """
+            Description:
+            Updates the bullet's position and velocity
+            
+            Returns:
+            None
+        """
+
         # apply gravity and drag
         self.yVelocity += self.gravity
         self.xVelocity *= self.drag
@@ -265,9 +272,34 @@ class Bullet(entities.Entity):
         self.rect.center = (self.x, self.y)
     
     def spawnBullet(self, i, bulletSpeed, damage):
+        """
+            Description:
+            spawns a bullet in a specific direction. used when just creating the bullet class is not possible (see exploading bullets)
+            
+            Args:
+            i: direction of the bullet
+            bulletSpeed: speed of the bullet
+            damage: damage of the bullet
+            
+            Returns:
+            Bullet object
+        """
         return Bullet(self.window, self.rect.centerx, self.rect.centery, i, bulletSpeed, pygame.time.get_ticks(), damage, False)
 
     def collisionDetection(self, mapSprites, players, bulletList):
+        """
+            Description:
+            Detects collisions between the bullet and the map sprites
+            
+            Args:
+            mapSprites: List of map sprites
+            players: List of player objects
+            bulletList: List of bullet sprites
+            
+            Returns:
+            None
+        """
+
         # Check if bullet collides with any map sprites
         for sprite in mapSprites:
             if pygame.sprite.collide_rect(self, sprite):
@@ -300,9 +332,7 @@ class Bullet(entities.Entity):
         
         # check if it hits the player and if so, deal damage
         for player in players:
-            # if player has exploading bullets, do the exploading bullets
             if player.exploadingBullets == True:
-                # only do exploading bullets every 6 irl seconds
                 if pygame.time.get_ticks() - player.exploadingBulletTime > 6000:
                     if pygame.sprite.collide_rect(self, player):
                         # set the time of
@@ -317,10 +347,9 @@ class Bullet(entities.Entity):
                         self.kill()
                         return
                 else:
-                    "exploading bullets on cooldown"
+                    print("exploading bullets on cooldown")
 
             # check if it his the player shield bubble
-
             if player.shieldBubble:
                 if pygame.sprite.collide_rect(self, player.shieldBubble):
                     # if its from your own bullets, ignore
@@ -361,20 +390,25 @@ class BasicPistol(WeaponBase):
         self.rect = self.image.get_rect()
     
         # set the weapon's stats
-        self.fireRate = 500 # higher number means slower fire rate
+        # higher number means slower fire rate
+        self.fireRate = 500
         self.magazineSize = 12
         self.bulletSpeed = 20
         self.damage = 10
         self.ammo = self.magazineSize
 
     def update(self):
+        """
+            Description:
+            Updates the weapon's position and rotation
+        """
         self.updatePositionAndRotation()
 
 class AssaultRifle(WeaponBase):
     def __init__(self, screen, player):
         # pass the player reference to the weaponbase
         WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)
-        self.player = player  # store the reference to the player who wields the weapon
+        self.player = player
         self.weaponName = "Assault Rifle"
 
         # load the weapon image
@@ -390,20 +424,24 @@ class AssaultRifle(WeaponBase):
         self.rect = self.image.get_rect()
     
         # set the weapon's stats
-        self.fireRate = 220 # higher number means slower fire rate
+        self.fireRate = 220
         self.magazineSize = 28
         self.bulletSpeed = 30
         self.damage = 15
         self.ammo = self.magazineSize
 
     def update(self):
+        """
+            Description:
+            Updates the weapon's position and rotation
+        """
         self.updatePositionAndRotation()
 
 class SMG(WeaponBase):
     def __init__(self, screen, player):
         # pass the player reference to the weaponbase
         WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)
-        self.player = player  # store the reference to the player who wields the weapon
+        self.player = player
         self.weaponName = "Sub Machine Gun"
 
         # load the weapon image
@@ -419,20 +457,24 @@ class SMG(WeaponBase):
         self.rect = self.image.get_rect()
     
         # set the weapon's stats
-        self.fireRate = 80 # higher number means slower fire rate
+        self.fireRate = 80
         self.magazineSize = 45
         self.bulletSpeed = 20
         self.damage = 6
         self.ammo = self.magazineSize
 
     def update(self):
+        """
+            Description:
+            Updates the weapon's position and rotation
+        """
         self.updatePositionAndRotation()
 
 class DesertEagle(WeaponBase):
     def __init__(self, screen, player):
         # pass the player reference to the weaponbase
         WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)
-        self.player = player  # store the reference to the player who wields the weapon
+        self.player = player
         self.weaponName = "Desert Eagle"
 
         # load the weapon image
@@ -448,11 +490,15 @@ class DesertEagle(WeaponBase):
         self.rect = self.image.get_rect()
     
         # set the weapon's stats
-        self.fireRate = 800 # higher number means slower fire rate
+        self.fireRate = 800 
         self.magazineSize = 3
         self.bulletSpeed = 46
         self.damage = 60
         self.ammo = self.magazineSize
 
     def update(self):
+        """
+            Description:
+            Updates the weapon's position and rotation
+        """
         self.updatePositionAndRotation()

@@ -24,14 +24,18 @@ def showStartScreen(screen):
 
         Args:
         screen: your game window
+
+        Returns:
+        resultColors: a list of the selected colors for each player
     """
     
+    # E - Entities
     titleText = font.render("Welcome to Gundown!", True, (255, 255, 255))
     subtitleText = smallFont.render("Press SPACE to start", True, (255, 255, 255))
     errorText = smallFont.render("At least two players must select colors!", True, (255, 100, 100))
     footerText = smallFont.render("Change colors by clicking (A), or using Mouse Left Click.", True, (255, 255, 255))
     
-    # get the screen size
+    # load the background image
     screenWidth, screenHeight = screen.get_size()
     bg = pygame.image.load("src/art/backgrounds/dark_abs_bg.gif")
     bg = pygame.transform.scale(bg, (screenWidth, screenHeight))
@@ -58,7 +62,6 @@ def showStartScreen(screen):
     # are ticked whenever a player connects or disconnects
     playerActive = [True, False, False]
 
-    # to colorize the boxie character, that we will put in the boxes after
     boxieImages = []
     for color in colors:
         image = pygame.image.load("src/art/character/boxie-white/default-340.png").convert_alpha()
@@ -66,9 +69,8 @@ def showStartScreen(screen):
         image.fill(color, special_flags=pygame.BLEND_RGB_MULT)
         boxieImages.append(image)
 
-    # gui icons
     mouseIcon = pygame.image.load("src/art/icons/mouse.gif")
-    mouseIcon = pygame.transform.scale(mouseIcon, (64, 64))  # Larger mouse GIF for visibility
+    mouseIcon = pygame.transform.scale(mouseIcon, (64, 64))
     
     controllerIcon = pygame.image.load("src/art/icons/controller.gif").convert_alpha()
     controllerIcon = pygame.transform.scale(controllerIcon, (32, 32))
@@ -152,7 +154,7 @@ def showStartScreen(screen):
         screen.blit(bg, (0, 0))
         screen.blit(titleText, (screenWidth // 2 - titleText.get_width() // 2, screenHeight // 8))
 
-        # add up the number of active players
+        # add up the number of active players based on the playerActive list
         activePlayers = sum(playerActive)
 
         # either show the "start game with enter text" or if there is the error show that one
@@ -189,7 +191,6 @@ def showStartScreen(screen):
             screen.blit(controllerIcon, (iconX, iconY))
 
         pygame.display.flip()
-        clock.tick(60)
 
     # outside of the loop
     resultColors = []

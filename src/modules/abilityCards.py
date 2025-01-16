@@ -113,5 +113,5 @@ AVAILABLECARDS = [
     AbilityCardBase("attribute", "Bullet Hell", "5x ammo but 1/5th damage", [Modifier("ammo", 5), Modifier("damage", 0.20)]),
 
     # exploading bullets
-    AbilityCardBase("attribute", "Explosive Bullets", "Bullets explode on impact", [Modifier("explosive", 0)]),
+    AbilityCardBase("attribute", "Bullet Shield", "Make a wild guess.", [Modifier("explosive", 0)]),
 ]

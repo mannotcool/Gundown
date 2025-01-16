@@ -274,7 +274,7 @@ class Player(Entity):
 
         # we put the players head by 1 pixel into the block above
         self.rect.top += 1
-        on_ground = False
+        onGround = False
         for sprite in mapSprites:
             # and if the player doesnt collide with a block, then they are on the ground
             if pygame.sprite.collide_rect(self, sprite): 
@@ -282,14 +282,14 @@ class Player(Entity):
                 if sprite.decorative:
                     continue
                 
-                on_ground = True
+                onGround = True
                 break
 
         # move the player back to the original position
         self.rect.top -= 1
 
         # only allow jumping when on the ground and not latched
-        if on_ground and not self.latching:
+        if onGround and not self.latching:
             self.gravity = -16  # negative gravity for upward motion, see runtimeGravity
 
     def weaponFire(self, shotFx):
@@ -355,17 +355,17 @@ class Player(Entity):
                 self.weapon.startReload(reloadFx)
         
         # if the right trigger is pressed, fire the weapon
-        right_trigger = joystick.get_axis(5) 
+        rightTrigger = joystick.get_axis(5) 
 
-        if right_trigger > 0.5:
+        if rightTrigger > 0.5:
             if self.weapon.ammo > 0:
                 self.weapon.fire(shotFx)
             elif not self.weapon.isReloading:
                 self.weapon.startReload(reloadFx)
         
         # latching with left trigger
-        left_trigger = joystick.get_axis(4)
-        if left_trigger > 0.5:
+        leftTrigger = joystick.get_axis(4)
+        if leftTrigger > 0.5:
             # only triggers when touching a wall with the latchable property
             if self.canLatch:
                 self.latching = True
@@ -461,9 +461,9 @@ class Player(Entity):
                 self.screen.blit(self.shieldBubble.image, self.shieldBubble.rect)
 
         # draw and update gui to player image using function
-        player_health_bar, player_ammo_count = self.displayGUI(self.screen)
-        player_health_bar.update()
-        player_ammo_count.update()
+        playerHealthBar, playerAmmoCount = self.displayGUI(self.screen)
+        playerHealthBar.update()
+        playerAmmoCount.update()
     
         # if player is dead, make them invisible-ish
         if self.isDead:
@@ -472,8 +472,8 @@ class Player(Entity):
             self.image.set_alpha(255)
 
         # draw the player's health bar and ammo count
-        self.screen.blit(player_health_bar.image, player_health_bar.rect)
-        self.screen.blit(player_ammo_count.image, player_ammo_count.rect)
+        self.screen.blit(playerHealthBar.image, playerHealthBar.rect)
+        self.screen.blit(playerAmmoCount.image, playerAmmoCount.rect)
 
         # update the weapon's position and state
         self.weapon.update()

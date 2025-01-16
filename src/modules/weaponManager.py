@@ -1,9 +1,16 @@
+"""
+    Author: Nick S
+    Date: January 15th, 2025
+    Description: houses the bullet entity and weapon classes
+"""
+
+# I - Import & Initialize
 import pygame
 import math
-
 from . import entities
 from . import utils
 
+# Base class for all weapons
 class WeaponBase(pygame.sprite.Sprite):
     def __init__(self, screen, x, y, player):
         pygame.sprite.Sprite.__init__(self)
@@ -13,7 +20,9 @@ class WeaponBase(pygame.sprite.Sprite):
         self.rect = None
         self.damage = 0
         self.fireRate = 0
-        self.lastFireTime = 0 # used to keep track of the last time the weapon was fired, then to ensure the fire rate is met
+
+        # used to keep track of the last time the weapon was fired, then to ensure the fire rate is met
+        self.lastFireTime = 0 
         self.lastReloadTime = 0
         self.affectedByGravity = False
         self.gravity = 0
@@ -25,13 +34,30 @@ class WeaponBase(pygame.sprite.Sprite):
         self.magazineSize = 0
         self.bulletSpeed = 0
         self.isReloading = False
-        self.reloadTime = 3000  # reload duration in milliseconds
+
+        # reload duration in milliseconds, doesnt really change
+        self.reloadTime = 3000  
         self.controlScheme = player.controlScheme
-        self.handleOffset = 20  # Offset for rotation point
-        self.lastJoystickAngle = 0  # Store the last joystick angle
+
+        # offset for rotation point, 20 pixels
+        self.handleOffset = 20  
+
+        # store the last joystick angle to prevent snapback
+        self.lastJoystickAngle = 0  
         self.flipped = False
 
     def startReload(self, reloadFx):
+        """
+            Description:
+            Starts the reload process for the weapon
+
+            Args:
+            reloadFx: Reload sound effect
+
+            Returns:
+            None
+        """
+
         self.lastReloadTime = pygame.time.get_ticks()
 
         # if it hasnt started reloading, then start
@@ -40,14 +66,31 @@ class WeaponBase(pygame.sprite.Sprite):
             self.isReloading = True
 
     def checkReloadComplete(self):
+        """
+            Description:
+            Checks if the reload is complete and updates the ammo count
+        """
         if self.isReloading:
             elapsed_time = pygame.time.get_ticks() - self.lastReloadTime
+            
+            # if the elapsed time is greater than the reload time, then the reload is complete
             if elapsed_time >= self.reloadTime:
                 self.ammo = self.magazineSize
                 self.isReloading = False
                 print("reload completed")
 
     def fire(self, shotFx):
+        """
+            Description:
+            Fires a bullet from the weapon
+            
+            Args:
+            shotFx: Sound effect for shooting
+            
+            Returns:
+            None
+        """
+        # if the weapon is reloading or has no ammo, dont fire
         if self.isReloading:
             return
 
@@ -61,13 +104,15 @@ class WeaponBase(pygame.sprite.Sprite):
             # get control scheme
             if self.controlScheme == "mouse":
                 mouse_x, mouse_y = pygame.mouse.get_pos()
-                # use the arc tan function to get the angle between the player and the mouse
+                # use the arc tan function to get the angle between the player and the mouse. virtual triangle some may say 
                 angle = math.degrees(math.atan2(mouse_y - self.weaponY, mouse_x - self.weaponX))
             elif self.controlScheme == "controller":
                 joystick = self.player.joyStick
                 joystick.init()
-                rightStickX = joystick.get_axis(2)  # Rjoystick horizontal
-                rightStickY = joystick.get_axis(3)  # Rjoystick vertical
+
+                # Rjoystick horizontal (x) and vertical (y)
+                rightStickX = joystick.get_axis(2)  
+                rightStickY = joystick.get_axis(3)
 
                 # dead zone logic to prevent stick drift
                 if rightStickX > 0.2 or rightStickX < -0.2 or rightStickY > 0.2 or rightStickY < -0.2:
@@ -87,12 +132,26 @@ class WeaponBase(pygame.sprite.Sprite):
             self.ammo -= 1
             
     def update(self):
+        """
+            Description:
+            Updates the weapon's position and rotation
+        """
         self.rect.center = (self.weaponX, self.weaponY)
         self.window.blit(self.image, self.rect)
+
+        # update the bullets
         self.bulletList.update()
         self.bulletList.draw(self.window)
 
     def updatePositionAndRotation(self):
+        """
+            Description:
+            Updates the weapon's position and rotation based on the player's control scheme.
+            This also flips the gun against their joycire
+            
+            Returns:
+            None
+        """
         # always follow the player's position
         self.weaponX = self.player.rect.centerx
         self.weaponY = self.player.rect.centery
@@ -124,6 +183,7 @@ class WeaponBase(pygame.sprite.Sprite):
 
         # adjust flipping based on if the cursor or joy is on the left side of the player
         if angle > 90 or angle < -90:
+            print(angle, "flipped")
             self.flipped = True
         else:
             self.flipped = False

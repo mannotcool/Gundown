@@ -59,10 +59,6 @@ def main():
 
     # E - Entities
 
-    # initalize fonts
-    font = pygame.font.SysFont("Arial", 16)
-    pixelArtFont = pygame.font.Font("src/fonts/ThaleahFat.ttf", 96)
-
     # add background music if debug is false, we want music in the start screen
     if debug == False:
         pygame.mixer.music.load("src/music/pizzatronMusic.ogg")
@@ -113,16 +109,15 @@ def main():
     # Used to store the dead players, will be used to detect when 1 player is alive and call for the new ability cards
     deadPlayers = []
     disableRespawns = False
-    gameEnd = False
+    gameEnd = None
 
     # create the players with the colors selected
     players = pygame.sprite.Group()
 
-    # create a player sprite object from our mySprites module
+    # create a player sprite object from our mySprites module. p1 is always mouse
     players.add(entities.Player(screen, 100, 100, "mouse", selectedPlayerColors[0], None))
-
-    # pick up all game controllers that exist and create a player for each one
     
+    # pick up all game controllers that exist and create a player for each one
     # check if there is a controller available
     joystick_count = pygame.joystick.get_count()
     if joystick_count > 0:
@@ -169,51 +164,46 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 keepGoing = False
+
+            # if the player presses the escape key, quit the game
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    keepGoing = False
         
         # scan to see if a controller is newly ocnnected 
         joystick_count = pygame.joystick.get_count()
 
-        # rounds end when all players are dead except for 1
         for player in players:
             if player.isDead and player not in deadPlayers:
                 deadPlayers.append(player)
 
-        # if all players are dead except for 1, show the ability card screen
-        if len(deadPlayers) == (len(players) - 1):
-            if disableRespawns == False:
-                # Unlock mouse
-                pygame.event.set_grab(False)
-
-                deadPlayers = utils.deathHandler(deadPlayers, players, sceneManager, screen, allSprites, abilityCards, selectFx)
-                pygame.event.set_grab(True)
-
-                # play bell noise because game is starting
-                bellFx.play()
-                if debug:
-                    print("Respawning players...")
-            else:
-                if debug:
-                    print("Respawns disabled, game over!")
-                # print label Game over in the top middle using custom font, and color of winning player who is still alive
-                for player in players:
-                    if player not in deadPlayers:
-                        pygame.event.set_grab(False)
-                        gameEnd = player.colorScheme
-                        
-        # Generalized runtime manager
-        for player in players:
-            # see if game needs to end
+             # check if all players are dead except for 1, and see if the 1 dead player has 3 score
             if player.score == 3:
-                # make sure that the last player alive is also the winner
                 if player not in deadPlayers:
                     disableRespawns = True
 
+                    # this is my super smart way of passing over the color of the player to the font
+                    gameEnd = player.colorScheme
+
+            # if all players are dead except for 1, show the ability card screen
+            if len(deadPlayers) == (len(players) - 1):
+                if disableRespawns == False:
+                    pygame.event.set_grab(False)
+                    deadPlayers = utils.deathHandler(deadPlayers, players, sceneManager, screen, allSprites, abilityCards, selectFx)
+                    pygame.event.set_grab(True)
+
+                    bellFx.play()
+                    if debug:
+                        print("Respawning players...")
+                else:
+                    if debug:
+                        print("Game over")
+                
+    
             # gravity logic
             player.runTimeGravityManager(mapSprites)
 
-            # check if player is controller or mouse
             if player.controlScheme == "controller":
-
                 # if joystick is not none, initalize it and run the movement
                 if player.joyStick != None:
                     player.joyStick.init()
@@ -223,29 +213,21 @@ def main():
 
             # if the player has a shieldBuble, draw it
             if player.shieldBubble != None:
-                # play sheildFx
                 allSprites.add(player.shieldBubble)
                 
             # allow bullets to have collision with walls
             for bullet in player.weapon.bulletList:
                 bullet.collisionDetection(mapSprites, players, player.weapon.bulletList)
     
-            # check if player is dead
             if player.Health <= 0:
                 player.isDead = True
 
             # the reload complete method checks if the reload time has passed and if so, sets the ammo back to the max
             player.weapon.checkReloadComplete()
-            
-            # allways add new bullets to the allSprites group
             allSprites.add(player.weapon.bulletList)
 
             # allows for reloading of the weapon
             player.update()
-           
-            # print in bottom right corner if respawns are disabled
-            if disableRespawns:
-                screen.blit(font.render("Respawns Disabled", True, (255, 0, 0)), (1000, 680))
 
         # for every physics object, call their internal function: runtimeGravity
         for physicsObject in physicsObjects:
@@ -256,8 +238,9 @@ def main():
         allSprites.update()              # Update all sprites
         allSprites.draw(screen)          # Draw all sprites
 
-        # if gameEnd is true, show the game over screen
-        if gameEnd is True:
+        # if gameEnd not nothing (cuz colors), show the game over screen
+        if gameEnd is not None:
+            pixelArtFont = pygame.font.Font("src/fonts/ThaleahFat.ttf", 96)
             screen.blit(pixelArtFont.render("Game Over!", True, gameEnd), (560, 10))
 
         screen.blit(crosshair, pygame.mouse.get_pos()) # draw the crosshair on top of everything
@@ -276,5 +259,4 @@ print(r"""   ______                    ______
                                                                     """)
 print("Gundown by Nick S - " + version + " - Debug: " + str(debug))
 
-# LETS RUN IT
 main()

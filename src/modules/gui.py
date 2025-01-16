@@ -1,6 +1,13 @@
+"""
+    Author: Nick S
+    Date: January 15th, 2025
+    Description: Ammo bar and Health bar for the player, GUI house. Also stores multi-player's score
+"""
+
+# I - Import & Initialize
 import pygame
 
-# Gui Elements
+# Health percentage bar above the player
 class HealthBar(pygame.sprite.Sprite):
     def __init__(self, screen, player):
         pygame.sprite.Sprite.__init__(self)
@@ -12,6 +19,10 @@ class HealthBar(pygame.sprite.Sprite):
         self.maxHealth = self.player.MaxHealth
 
     def update(self):
+        """
+            Description:
+            Updates the health bar based on the player's health
+        """
         self.image.fill((0, 255, 0))  # green for full health
 
         # red overlay width based on lost health
@@ -31,6 +42,7 @@ class HealthBar(pygame.sprite.Sprite):
         # and updating the position to follow the player
         self.rect.center = (self.player.rect.centerx, self.player.rect.top - 10)
 
+# Bullet bar above the player
 class BulletBar(pygame.sprite.Sprite):
     def __init__(self, screen, player):
         pygame.sprite.Sprite.__init__(self)
@@ -55,6 +67,10 @@ class BulletBar(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
     def update(self):
+        """
+            Description:
+            Updates the bullet bar based on the player's ammo
+        """
         # clear the image, fill it with black which is transparent due to colorkey
         self.image.fill((0, 0, 0))  
 
@@ -103,13 +119,25 @@ class ScoreKeeper(pygame.sprite.Sprite):
         self.rect.topleft = location
 
     def update(self):
+        """
+            Description:
+            Updates the scorekeeper based on the player's score
+        """
+        # get the player's score
         self.score = self.player.score
         self.image.fill((0, 0, 0))
         self.image.set_alpha(200)
+
+        # draw the squares based on the score
         for i in range(self.numSquares):
+            # if the index is less than the score, draw a large square
             size = self.largeSize if i < self.score else self.squareSize
+
+            # calculate the x and y position of the square
             x = i * (self.largeSize + self.spacing)
             y = (self.imageHeight - size) // 2
+
+            # draw the square
             pygame.draw.rect(self.image, self.color, (x, y, size, size))
 
 

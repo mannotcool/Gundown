@@ -1,3 +1,9 @@
+"""
+    Author: Nick S
+    Date: January 15th, 2025
+    Description: Houses all the ability cards for the player to select, and their modifiers
+"""
+
 import pygame
 from . import weaponManager
 
@@ -5,11 +11,13 @@ from . import weaponManager
 class AbilityCardBase(pygame.sprite.Sprite):
     def __init__(self, cardType, cardName, cardDescription, modifierList):
         pygame.sprite.Sprite.__init__(self)
+        # cardType is either "attribute" or "weapon"
         self.cardType = cardType
         self.cardName = cardName
         self.cardDescription = cardDescription
         self.modifiers = modifierList
     
+# Modifier class, applies the modifier to the player
 class Modifier(pygame.sprite.Sprite):
     def __init__(self, modifierType, modifierValue):
         pygame.sprite.Sprite.__init__(self)
@@ -17,13 +25,24 @@ class Modifier(pygame.sprite.Sprite):
         self.modifierValue = modifierValue
     
     def applyModifier(self, player):
+        """
+            Description:
+            Applies the modifier to the player
+
+            Args:
+            player: Player object
+
+            Returns:
+            None
+        
+        """
         if self.modifierType == "speed":
             # ensure to do a check to make sure current speed is not negative, 
             player.walkSpeed = int(player.walkSpeed * self.modifierValue)
         elif self.modifierType == "health":
             player.MaxHealth = int(player.MaxHealth * self.modifierValue)
         elif self.modifierType == "damage":
-            player.weapon.damage = int(player.weapon.damage + self.modifierValue)
+            player.weapon.damage = int(player.weapon.damage * self.modifierValue)
         elif self.modifierType == "ammo":
             # make sure ammo is never more than 500
             if player.weapon.magazineSize * self.modifierValue > 500:
@@ -67,7 +86,7 @@ class Modifier(pygame.sprite.Sprite):
         elif self.modifierType == "explosive":
             player.exploadingBullets = True
 
-availableCards = [
+AVAILABLECARDS = [
     # Base cards
     AbilityCardBase("attribute", "Speed Boost", "Increases player speed by 50%", [Modifier("speed", 1.5)]),
     AbilityCardBase("attribute", "Health Boost", "Increases player health by 2x", [Modifier("health", 2)]),

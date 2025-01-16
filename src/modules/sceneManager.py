@@ -1,25 +1,42 @@
+"""
+    Author: Nick S
+    Date: January 15th, 2025
+    Description: mapManager.py is responsible for managing the map components and their interactions
+"""
+
+# I - Import & Initialize
 import pygame
 import random
 from . import utils
+
 pygame.font.init()
 pygame.mixer.init()
 
+# load ThaleahFat.ttf for the title text
+font = pygame.font.Font("src/fonts/ThaleahFat.ttf", 48)
+smallFont = pygame.font.SysFont("Arial", 24)
 
 def showStartScreen(screen):
-    # load ThaleahFat.ttf for the title text
-    font = pygame.font.Font("src/fonts/ThaleahFat.ttf", 96)
-    smallFont = pygame.font.SysFont("Arial", 24)
+    """
+        Description:
+        Shows the start screen for the game, where players can select their colors.
+        When its called, its used to set a variable, causing the game to hang until the players select their colors, and the first player starts the game.
+
+        Args:
+        screen: your game window
+    """
     
     titleText = font.render("Welcome to Gundown!", True, (255, 255, 255))
     subtitleText = smallFont.render("Press SPACE to start", True, (255, 255, 255))
     errorText = smallFont.render("At least two players must select colors!", True, (255, 100, 100))
     footerText = smallFont.render("Change colors by clicking (A), or using Mouse Left Click.", True, (255, 255, 255))
     
+    # get the screen size
     screenWidth, screenHeight = screen.get_size()
     bg = pygame.image.load("src/art/backgrounds/dark_abs_bg.gif")
     bg = pygame.transform.scale(bg, (screenWidth, screenHeight))
 
-    colors = [utils.Colors.red, utils.Colors.blue, utils.Colors.orange, utils.Colors.purple, utils.Colors.green]
+    colors = [utils.Colors.RED, utils.Colors.BLUE, utils.Colors.ORANGE, utils.Colors.PURPLE, utils.Colors.GREEN]
 
     # box used to draw the players preview
     boxWidth = 150
@@ -94,6 +111,11 @@ def showStartScreen(screen):
                     else:
                         # display a text error telling you to find friends
                         showError = True
+                
+                # escape key to quit the game
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        keepGoing = False
 
             # change the color of  player 1
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -181,8 +203,20 @@ def showStartScreen(screen):
     return resultColors
 
 def showAbilityCardScreen(screen, players, availableCards, selectFx):
-    font = pygame.font.Font("src/fonts/ThaleahFat.ttf", 48)
-    smallFont = pygame.font.SysFont("Arial", 24)
+    """
+        Description:
+        Shows the ability card screen for the game, where players can select their ability cards.
+        When its called, its used to set a variable, causing the game to hang until the players select their ability cards.
+        
+        Args:
+        screen: your game window
+        players: the player sprites
+        availableCards: the available ability cards, it will use the set from abiliyCards.py
+        selectFx: the sound effect for selecting a card
+
+        Returns:
+        changedWeapons: a list of the players whose weapons were changed, so that i can properally refresh and add to all sprites or else it aint show up
+        """
 
     titleText = font.render("New Ability Cards!", True, (255, 255, 255))
     instructionText = smallFont.render("Click on an ability card, or select using (A) or (B)", True, (255, 255, 255))
@@ -226,6 +260,12 @@ def showAbilityCardScreen(screen, players, availableCards, selectFx):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 keepGoing = False
+
+            # escape key to quit the game
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    keepGoing = False
+
 
             # if the player is mouse, they can select the card by clicking on it
             if event.type == pygame.MOUSEBUTTONDOWN:

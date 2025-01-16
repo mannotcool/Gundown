@@ -1,28 +1,58 @@
+"""
+    Author: Nick S
+    Date: January 15th, 2025
+    Description: a bunch of utility functions that are used throughout the game
+"""
+
+# I - Import & Initialize
 import pygame
 
+# head collision check, returns True if there is a head collision
 def collisionCheck(player, mapSprites):
-    # check for head collision
-    player.rect.top -= 1  # temporarily move up to check collision
+    """
+        Description:
+        Checks if the player has a head collision with any of the map sprites
+        
+        Args:
+        player: Player object
+        mapSprites: List of map sprites
+
+        Returns:
+        headCollision: True if there is a head collision
+    """
+    # move the player up by 1 pixel
+    player.rect.top -= 1  
     headCollision = False
     for sprite in mapSprites:
         if pygame.sprite.collide_rect(player, sprite):
             if sprite.decorative:
-                continue # ignore decorative sprites
+                continue 
             headCollision = True
             break
-    player.rect.top += 1  # reset position after checking
+    # reset position after checking
+    player.rect.top += 1  
 
     # if there is a head collision, return True
     return headCollision
 
 def generalizedRespawn(players):
+    """
+        Description:
+        Respawns all players at their respective spawn points
+        
+        Args:
+        players: List of Player objects
+
+        Returns:
+        None
+    """
+
     for player in players:
-        # check if they are mouse, and spawn them on the left side of the screen
         if player.controlScheme == "mouse":
             player.respawnPlayerAtCords(100, 100)
         else:
             # joystick 1 spawns in the middle and joystick 2 spawns on the right
-            # check their joystick
+
             if player.joyStick.get_id() == 0:
                 # spawn in middle
                 player.respawnPlayerAtCords(600, 100)
@@ -31,15 +61,32 @@ def generalizedRespawn(players):
                 player.respawnPlayerAtCords(1140, 100)
 
 class Colors():
-    red = (255, 103, 117)
-    orange = (255, 188, 110)
-    yellow = (255, 255, 135)
-    green = (135,255,161)
-    blue = (110,192,255)
-    purple = (188,167,255)
+    RED = (255, 103, 117)
+    ORANGE = (255, 188, 110)
+    YELLOW = (255, 255, 135)
+    GREEN = (135,255,161)
+    BLUE = (110,192,255)
+    PURPLE = (188,167,255)
 
 def deathHandler(deadPlayers, players, sceneManager, screen, allSprites, abilityCards, selectFx):
-    # find the 1 not dead player and award them 1 score
+    """
+        Description:
+        Handles the death of players
+
+        Args:
+        deadPlayers: List of dead Player objects
+        players: List of Player objects
+        sceneManager: SceneManager object
+        screen: Pygame screen object
+        allSprites: List of all sprites
+        abilityCards: AbilityCards object
+        selectFx: Sound object
+
+        Returns:
+        []: empty array which is what deadPlayers is set to
+
+    """
+
     for player in players:
         if player not in deadPlayers:
             player.score += 1
@@ -49,13 +96,13 @@ def deathHandler(deadPlayers, players, sceneManager, screen, allSprites, ability
     pygame.mouse.set_visible(True)
 
     # show the ability card screen
-    changedWeapons = sceneManager.showAbilityCardScreen(screen, players, abilityCards.availableCards, selectFx)
+    changedWeapons = sceneManager.showAbilityCardScreen(screen, players, abilityCards.AVAILABLECARDS, selectFx)
 
     # append the player's weapons that are in the changedWeapons list to allsprites
     for playerWhoseWeaponChanged in changedWeapons:
         allSprites.add(playerWhoseWeaponChanged.weapon)
 
-    # undie the rest lul
+    # revive the rest
     for player in players:
         player.isDead = False
         
@@ -72,6 +119,20 @@ def deathHandler(deadPlayers, players, sceneManager, screen, allSprites, ability
     return []
 
 def shootBulletsAllDirections(self, bulletList, bulletSpeed, damage, ratio=10):
+    """
+        Description:
+        Shoots bullets in all directions, used by the physics bomb and exploading bullets ability cards
+
+        Args:
+        self: Player object
+        bulletList: List of bullet sprites
+        bulletSpeed: Speed of the bullet
+        damage: Damage of the bullet
+        ratio: Ratio of the bullet spread. ratio skips via this
+
+        Returns:
+        None
+    """
     for i in range(0, 360, ratio):
         bullet = self.spawnBullet(i, bulletSpeed, damage)
         bulletList.add(bullet)

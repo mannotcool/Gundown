@@ -7,8 +7,11 @@
 # I - Import & Initialize
 import pygame
 
-# Health percentage bar above the player
 class HealthBar(pygame.sprite.Sprite):
+    """
+        Description:
+        Health bar for the player
+    """
     def __init__(self, screen, player):
         pygame.sprite.Sprite.__init__(self)
         self.window = screen
@@ -42,8 +45,11 @@ class HealthBar(pygame.sprite.Sprite):
         # and updating the position to follow the player
         self.rect.center = (self.player.rect.centerx, self.player.rect.top - 10)
 
-# Bullet bar above the player
 class BulletBar(pygame.sprite.Sprite):
+    """
+        Description:
+        floating bullet ammo bar for the player
+    """
     def __init__(self, screen, player):
         pygame.sprite.Sprite.__init__(self)
         self.window = screen
@@ -101,8 +107,12 @@ class BulletBar(pygame.sprite.Sprite):
         # bullet bar above the health bar
         self.rect.center = (self.player.rect.centerx, self.player.rect.top - 20 - self.imageH // 2)
 
-# Scorekeeper stores player score, and displays in the top left corner as squares
 class ScoreKeeper(pygame.sprite.Sprite):
+    """
+        Description:
+        Scorekeeper stores player score, and displays 
+        in the top left corner as squares
+    """
     def __init__(self, screen, player, location):
         pygame.sprite.Sprite.__init__(self)
         self.window = screen
@@ -139,7 +149,3 @@ class ScoreKeeper(pygame.sprite.Sprite):
 
             # draw the square
             pygame.draw.rect(self.image, self.color, (x, y, size, size))
-
-
-
-

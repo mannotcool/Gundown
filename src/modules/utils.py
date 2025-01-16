@@ -61,6 +61,11 @@ def generalizedRespawn(players):
                 player.respawnPlayerAtCords(1140, 100)
 
 class Colors():
+    """
+        Description:
+        Contains color constants that I use throughout the game
+    """
+    
     RED = (255, 103, 117)
     ORANGE = (255, 188, 110)
     YELLOW = (255, 255, 135)

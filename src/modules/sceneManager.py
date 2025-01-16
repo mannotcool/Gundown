@@ -383,10 +383,10 @@ def showAbilityCardScreen(screen, players, availableCards, selectFx):
             if selectedCard.cardName in ["Assault Rifle", "Desert Eagle", "SMG"]:
                 changedWeapons.append(players.sprites()[i])
             for modifier in selectedCard.modifiers:
-                modifier.applyModifier(players.sprites()[i])
+                modifier.setModifier(players.sprites()[i])
 
     # slight buffer
-    pygame.time.wait(400)
+    pygame.time.wait(460)
 
     # return the players whose weapons were changed, so that i can properally refresh and add to all sprites
     return changedWeapons

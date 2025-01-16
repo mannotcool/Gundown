@@ -7,9 +7,13 @@
 # I - Import & Initialize
 import pygame
 
-# MapObject class, base class for all map components
 class MapObject(pygame.sprite.Sprite):
-    # General class for Map Components
+    """
+        Description:
+        General class for Map Components.
+    """
+
+    # general class for Map Components
     def __init__(self, screen):
         pygame.sprite.Sprite.__init__(self)
         self.window = screen
@@ -25,8 +29,13 @@ class MapObject(pygame.sprite.Sprite):
         self.objectHealth = 0
         self.latchable = False
        
-# StaticMapObject class, originally for static map components but also supports physics objects
 class StaticMapObject(MapObject):
+    """
+        Description:
+        StaticMapObject class, originally
+        for static map components but also supports physics objects
+    """
+    
     def __init__(self, screen, x, y, width, height, color=(0, 0, 0), alpha=255, collisionType="solid", latchable=False, affectedByGravity=False, gravity=0, decorative=False):
         MapObject.__init__(self, screen)
         self.image = pygame.Surface((width, height))

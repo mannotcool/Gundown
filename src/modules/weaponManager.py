@@ -12,6 +12,10 @@ from . import utils
 
 # Base class for all weapons
 class WeaponBase(pygame.sprite.Sprite):
+    """
+        Description:
+        Base class for all weapons
+    """
     def __init__(self, screen, x, y, player):
         pygame.sprite.Sprite.__init__(self)
         self.window = screen
@@ -217,8 +221,13 @@ class WeaponBase(pygame.sprite.Sprite):
         self.rect = rotatedRect
         self.rect.center = (self.weaponX, self.weaponY)
 
-# bullets are entities that move in a straight line with a little bit of gravity and rotation
 class Bullet(entities.Entity):
+    """
+        Description:
+        Bullet entity class. Bullets move in a straight line with a little bit of gravity and rotation
+        For more info on the physics, see diagrams in src/concepts. also inherits from the entity class regardless that its in weaponmanager
+    """
+
     def __init__(self, screen, x, y, direction, speed, bulletShotTime, damage, bulletTimeProtection=True):
         entities.Entity.__init__(self, screen)
         self.window = screen
@@ -251,7 +260,6 @@ class Bullet(entities.Entity):
         self.bounces = 0
 
         self.damage = damage
-
 
     def update(self):
         """
@@ -368,9 +376,11 @@ class Bullet(entities.Entity):
                         player.Health -= self.damage
                         self.kill()
 
-# Weapons
-
 class BasicPistol(WeaponBase):
+    """
+        Description:
+        Basic pistol weapon class. was used as a base for other weapons
+    """
     def __init__(self, screen, player):
         # pass the player reference to the weaponbase
         WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)
@@ -405,6 +415,10 @@ class BasicPistol(WeaponBase):
         self.updatePositionAndRotation()
 
 class AssaultRifle(WeaponBase):
+    """
+        Description:
+        Assault rifle weapon class. slightly faster with more shots than the basic pistol
+    """
     def __init__(self, screen, player):
         # pass the player reference to the weaponbase
         WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)
@@ -425,7 +439,7 @@ class AssaultRifle(WeaponBase):
     
         # set the weapon's stats
         self.fireRate = 220
-        self.magazineSize = 28
+        self.magazineSize = 25
         self.bulletSpeed = 30
         self.damage = 15
         self.ammo = self.magazineSize
@@ -438,6 +452,10 @@ class AssaultRifle(WeaponBase):
         self.updatePositionAndRotation()
 
 class SMG(WeaponBase):
+    """
+        Description:
+        Faster than the assault rifle but way less damage
+    """
     def __init__(self, screen, player):
         # pass the player reference to the weaponbase
         WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)
@@ -471,6 +489,10 @@ class SMG(WeaponBase):
         self.updatePositionAndRotation()
 
 class DesertEagle(WeaponBase):
+    """
+        Description:
+        High damage, low ammo weapon, better be accurate
+    """
     def __init__(self, screen, player):
         # pass the player reference to the weaponbase
         WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)

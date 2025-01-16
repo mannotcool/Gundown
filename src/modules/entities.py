@@ -10,9 +10,11 @@ import math
 from . import utils
 from . import gui
 
-# Entity class is the parent class for all entities
 class Entity(pygame.sprite.Sprite):
-    # Used by any entity that needs to have physics applied to it
+    """
+        Description:
+        Parent class for all entities in the game
+    """
     def __init__(self, screen):
         # Call the parent __init__() method
         pygame.sprite.Sprite.__init__(self)
@@ -31,8 +33,11 @@ class Entity(pygame.sprite.Sprite):
         self.x = 0
         self.y = 0
         
-# Players are called boxies, and are the main characters of the game
 class Player(Entity):
+    """
+        Description:
+        Player class, the main character of the game (boxie)
+    """
     def __init__(self, screen, x, y, controlScheme, color=utils.Colors.RED, joystick=None):
         Entity.__init__(self, screen)
         # the color from the startscreen
@@ -480,6 +485,10 @@ class Player(Entity):
     
 
 class ShieldBubble(Entity):
+    """
+        Description:
+        Shield bubble class, a bubble that protects the player from damage
+    """
     def __init__(self, screen, player):
         Entity.__init__(self, screen)
         self.window = screen
@@ -502,7 +511,7 @@ class ShieldBubble(Entity):
         Description: Deal damage to the shield bubble
         args: damage - the amount of damage to deal to the shield bubble
         """
-
+        
         self.Health -= damage  # deal damage to the shield   
         if self.Health <= 0:
             self.kill()

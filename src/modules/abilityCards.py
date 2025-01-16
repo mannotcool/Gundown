@@ -9,6 +9,16 @@ from . import weaponManager
 
 # Base class for all ability cards, basically a list of modifiers
 class AbilityCardBase(pygame.sprite.Sprite):
+    """
+        Description:
+        Base class for all ability cards, basically a list of modifiers
+
+        Attributes:
+        cardType: Type of card, either "attribute" or "weapon"
+        cardName: Name of the card
+        cardDescription: Description of the card
+        modifierList: List of Modifier objects
+    """
     def __init__(self, cardType, cardName, cardDescription, modifierList):
         pygame.sprite.Sprite.__init__(self)
         # cardType is either "attribute" or "weapon"
@@ -19,22 +29,26 @@ class AbilityCardBase(pygame.sprite.Sprite):
     
 # Modifier class, applies the modifier to the player
 class Modifier(pygame.sprite.Sprite):
+    """
+        Description:
+        Applies the modifier (more damage, health, etc) to a player
+
+        Attributes:
+        modifierType: Type of modifier
+        modifierValue: Value of the modifier
+    """
     def __init__(self, modifierType, modifierValue):
         pygame.sprite.Sprite.__init__(self)
         self.modifierType = modifierType
         self.modifierValue = modifierValue
     
-    def applyModifier(self, player):
+    def setModifier(self, player):
         """
             Description:
             Applies the modifier to the player
 
             Args:
             player: Player object
-
-            Returns:
-            None
-        
         """
         if self.modifierType == "speed":
             # ensure to do a check to make sure current speed is not negative, 

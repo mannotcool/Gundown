@@ -164,9 +164,9 @@ class Player(Entity):
 
         # get the angle between the player and the mouse by creating a triangle with the x and y of the mouse (it is in radians)
         angle = math.atan2(mousePos[1] - self.rect.center[1], mousePos[0] - self.rect.center[0])
-        # convert the angle to degrees
+        
+        # convert the angle to degrees from radians
         angle = angle * (180 / math.pi)
-        # return the angle
         return angle
     
     def getDirectionJoy(self, joyPos):
@@ -178,9 +178,9 @@ class Player(Entity):
 
         # get the angle between the player and the joystick by creating a triangle with the x and y of the joystick (it is in radians)
         angle = math.atan2(joyPos[1], joyPos[0])
-        # convert the angle to degrees
+
+        # convert the angle to degrees from radians
         angle = angle * (180 / math.pi)
-        # return the angle
         return angle
     
     # use x and y to keep track of the player's position, and thats the center of the player
@@ -195,10 +195,7 @@ class Player(Entity):
         if self.isDead:
             return
         
-        # Reset the latchable flag to False initially
         self.canLatch = False
-
-        # Move the player horizontally
         self.rect.left += x
 
         # Check collisions with map sprites
@@ -483,7 +480,6 @@ class Player(Entity):
         # update the weapon's position and state
         self.weapon.update()
     
-
 class ShieldBubble(Entity):
     """
         Description:
@@ -511,7 +507,7 @@ class ShieldBubble(Entity):
         Description: Deal damage to the shield bubble
         args: damage - the amount of damage to deal to the shield bubble
         """
-        
+
         self.Health -= damage  # deal damage to the shield   
         if self.Health <= 0:
             self.kill()

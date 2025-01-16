@@ -65,7 +65,7 @@ class Colors():
         Description:
         Contains color constants that I use throughout the game
     """
-    
+
     RED = (255, 103, 117)
     ORANGE = (255, 188, 110)
     YELLOW = (255, 255, 135)
@@ -107,11 +107,10 @@ def deathHandler(deadPlayers, players, sceneManager, screen, allSprites, ability
     for playerWhoseWeaponChanged in changedWeapons:
         allSprites.add(playerWhoseWeaponChanged.weapon)
 
-    # revive the rest
     for player in players:
         player.isDead = False
         
-        # go into their weapons and kill every bulletList sprite
+        # go into their weapons and kill every bulletList sprite to prevent bullets from lasting into next round
         for bullet in player.weapon.bulletList:
             bullet.kill()
 

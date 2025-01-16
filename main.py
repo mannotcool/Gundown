@@ -90,7 +90,6 @@ def main():
 
     # E - Entities
 
-    # add background music if debug is false, we want music in the start screen
     if DEBUG == False:
         pygame.mixer.music.load("src/music/pizzatronMusic.ogg")
         pygame.mixer.music.set_volume(0.3)
@@ -151,9 +150,7 @@ def main():
     # check if there is a controller available
     joystick_count = pygame.joystick.get_count()
     if joystick_count > 0:
-        # add them do not set players yet
         for i in range(joystick_count):
-            # initalize and add the joystick
             players.add(entities.Player(screen, 100, 100, "controller", selectedPlayerColors[i + 1], pygame.joystick.Joystick(i)))
     
     # attach pistols onto all the players using attachWeapon
@@ -166,7 +163,6 @@ def main():
     # for every player, create a scorekeeper object. its a 3 square bar top left corner with small rects for no points and scaled squares for points
     scoreKeepers = pygame.sprite.Group()
     for player in players:
-        # for the index of player, make the location y 10 + 40 * index
         scoreKeepers.add(gui.ScoreKeeper(screen, player, (20, 10 + 40 * players.sprites().index(player))))
 
     # add all sprites include the player, weapon, bullets, and map sprites to the allSprites group
@@ -269,7 +265,7 @@ def main():
         allSprites.update()              # Update all sprites
         allSprites.draw(screen)          # Draw all sprites
 
-        # if gameEnd not nothing (cuz colors), show the game over screen
+        # if gameEnd not nothing (if gameend, would be a color), show the game over screen
         if gameEnd is not None:
             pixelArtFont = pygame.font.Font("src/fonts/ThaleahFat.ttf", 96)
             screen.blit(pixelArtFont.render("Game Over!", True, gameEnd), (560, 10))

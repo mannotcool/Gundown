@@ -7,7 +7,6 @@
 import pygame
 from . import weaponManager
 
-# Base class for all ability cards, basically a list of modifiers
 class AbilityCardBase(pygame.sprite.Sprite):
     """
         Description:
@@ -27,7 +26,6 @@ class AbilityCardBase(pygame.sprite.Sprite):
         self.cardDescription = cardDescription
         self.modifiers = modifierList
     
-# Modifier class, applies the modifier to the player
 class Modifier(pygame.sprite.Sprite):
     """
         Description:

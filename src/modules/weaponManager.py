@@ -121,9 +121,10 @@ class WeaponBase(pygame.sprite.Sprite):
                 # dead zone logic to prevent stick drift
                 if rightStickX > 0.2 or rightStickX < -0.2 or rightStickY > 0.2 or rightStickY < -0.2:
                     angle = math.degrees(math.atan2(rightStickY, rightStickX))
-                    self.player.weapon.lastJoystickAngle = angle  # Update lastJoystickAngle when firing
+                    # update lastJoystickAngle when firing to prevent snapback
+                    self.player.weapon.lastJoystickAngle = angle  
                 else:
-                    # Use lastJoystickAngle if the joystick is idle
+                    # use lastJoystickAngle if the joystick is idle
                     angle = self.player.weapon.lastJoystickAngle
 
             bulletShotTime = pygame.time.get_ticks()
@@ -131,8 +132,6 @@ class WeaponBase(pygame.sprite.Sprite):
             bullet = Bullet(self.window, self.weaponX, self.weaponY, angle, self.bulletSpeed, bulletShotTime, self.damage)
             shotFx.play()
             self.bulletList.add(bullet)
-
-            # subtract ammo
             self.ammo -= 1
             
     def update(self):
@@ -175,8 +174,9 @@ class WeaponBase(pygame.sprite.Sprite):
             joystick = self.player.joyStick
             joystick.init()
 
-            rStickX = joystick.get_axis(2)  # Rjoy horizontal
-            rStickY = joystick.get_axis(3)  # Rjoy vertical
+            # Rjoy horizontal (x) and vertical (y)
+            rStickX = joystick.get_axis(2)  
+            rStickY = joystick.get_axis(3)
 
             # subtle deadzones for joystick, prevent drift
             if rStickX > 0.2 or rStickX < -0.2 or rStickY > 0.2 or rStickY < -0.2:
@@ -199,13 +199,15 @@ class WeaponBase(pygame.sprite.Sprite):
 
         # flip the image or else it looks dumb
         if self.flipped:
-            rotatedImage = pygame.transform.flip(rotatedImage, False, True)  # Flip horizontally
+            rotatedImage = pygame.transform.flip(rotatedImage, False, True)
 
         # adjust the weapon's horizontal offset so its not in the player
         if self.flipped:
-            self.weaponX -= self.handleOffset  # Move left for flipped
+            # Move left for flipped
+            self.weaponX -= self.handleOffset 
         else:
-            self.weaponX += self.handleOffset  # Move right for normal
+            # Move right for normal
+            self.weaponX += self.handleOffset  
 
         # update the image and rectbox for positioning
         self.image = rotatedImage
@@ -235,11 +237,12 @@ class Bullet(entities.Entity):
         # Define the bullet's dimensions
         self.bulletSize = 10
         self.image = pygame.Surface((self.bulletSize, self.bulletSize))
-        self.image.fill((255, 255, 255))  # bullet color
+        self.image.fill((255, 255, 255))
 
         # Initialize position and direction
         self.rect = self.image.get_rect(center=(x, y))
-        self.direction = math.radians(direction)  # convert direction to radians
+        # convert direction to radians because math functions use radians
+        self.direction = math.radians(direction)  
         
         # horizontal velocity is calculated using the speed and the cosine of the direction using formula v = d * cos(theta)
         self.xVelocity = speed * math.cos(self.direction)  
@@ -247,18 +250,19 @@ class Bullet(entities.Entity):
         # vertical velocity is calculated using the speed and the sine of the direction using formula v = d * sin(theta)
         self.yVelocity = speed * math.sin(self.direction)
         
-        self.drag = 0.99  # air resistance (drag force for x)
-        self.gravity = 0.3  # gravity force (downward force for y)
+        # air resistance (drag force for x) & gravity force (downward force for y)
+        self.drag = 0.99  
+        self.gravity = 0.3 
         
         self.x = x
         self.y = y
+        
+        # prevent player from getting hit by their own bullets
+        self.bulletCastTime = bulletShotTime 
         self.bulletTimeProtection = bulletTimeProtection
-
-        self.bulletCastTime = bulletShotTime # used to prevent player from getting hit by their own bullets
 
         # count bounces if hits a bounce object
         self.bounces = 0
-
         self.damage = damage
 
     def update(self):
@@ -330,12 +334,10 @@ class Bullet(entities.Entity):
                     elif sprite.collisionType == "bounce":
                         # reverse direction on collision
                         if self.rect.bottom > sprite.rect.top and self.rect.top < sprite.rect.bottom:
-                            self.yVelocity = -self.yVelocity  # Vertical bounce
-                            # add to bounces
+                            self.yVelocity = -self.yVelocity 
                             self.bounces += 1
                         if self.rect.right > sprite.rect.left and self.rect.left < sprite.rect.right:
-                            self.xVelocity = -self.xVelocity  # Horizontal bounce
-                            # add to bounces
+                            self.xVelocity = -self.xVelocity 
                             self.bounces += 1
         
         # check if it hits the player and if so, deal damage
@@ -382,9 +384,9 @@ class BasicPistol(WeaponBase):
         Basic pistol weapon class. was used as a base for other weapons
     """
     def __init__(self, screen, player):
-        # pass the player reference to the weaponbase
         WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)
-        self.player = player  # store the reference to the player who wields the weapon
+        # store the reference to the player who wields the weapon
+        self.player = player  
         self.weaponName = "Pistol"
 
         # load the weapon image
@@ -425,7 +427,6 @@ class AssaultRifle(WeaponBase):
         self.player = player
         self.weaponName = "Assault Rifle"
 
-        # load the weapon image
         self.baseImage = pygame.image.load("src/art/weapons/ar/wo_ar.png").convert_alpha()
         
         # scale it down
@@ -457,12 +458,10 @@ class SMG(WeaponBase):
         Faster than the assault rifle but way less damage
     """
     def __init__(self, screen, player):
-        # pass the player reference to the weaponbase
         WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)
         self.player = player
         self.weaponName = "Sub Machine Gun"
 
-        # load the weapon image
         self.baseImage = pygame.image.load("src/art/weapons/smg/wo_smg.png").convert_alpha()
         
         # scale it down
@@ -494,12 +493,10 @@ class DesertEagle(WeaponBase):
         High damage, low ammo weapon, better be accurate
     """
     def __init__(self, screen, player):
-        # pass the player reference to the weaponbase
         WeaponBase.__init__(self, screen, player.rect.centerx, player.rect.centery, player)
         self.player = player
         self.weaponName = "Desert Eagle"
 
-        # load the weapon image
         self.baseImage = pygame.image.load("src/art/weapons/deagle/wo_deagle.png").convert_alpha()
         
         # scale it down

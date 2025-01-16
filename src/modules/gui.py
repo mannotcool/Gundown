@@ -18,7 +18,7 @@ class HealthBar(pygame.sprite.Sprite):
         self.player = player
         self.image = pygame.Surface((self.player.rect.width, 6))
         self.rect = self.image.get_rect()
-        self.rect.center = (self.player.rect.centerx, self.player.rect.top - 10) # put it above the player
+        self.rect.center = (self.player.rect.centerx, self.player.rect.top - 10)
         self.maxHealth = self.player.MaxHealth
 
     def update(self):
@@ -26,7 +26,8 @@ class HealthBar(pygame.sprite.Sprite):
             Description:
             Updates the health bar based on the player's health
         """
-        self.image.fill((0, 255, 0))  # green for full health
+        # green for full health
+        self.image.fill((0, 255, 0))  
 
         # red overlay width based on lost health
         lostHealthPercentage = 1 - (self.player.Health / self.maxHealth)
@@ -54,9 +55,13 @@ class BulletBar(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.window = screen
         self.player = player
-        self.bulletSize = 5  # size of bullet squares
-        self.bulletsPerRow = 5  # fixed number of bullets per row
-        self.spacing = 2  # and spacing between bullets
+
+        # size of bullet squares
+        self.bulletSize = 5  
+        # fixed number of bullets per row
+        self.bulletsPerRow = 5 
+        # and spacing between bullets
+        self.spacing = 2
 
         # calc dimensions of the bullet bar. no remainders allowed because you cant have half a bullet
         self.maxRows = (player.weapon.magazineSize + self.bulletsPerRow - 1) // self.bulletsPerRow
@@ -86,7 +91,11 @@ class BulletBar(pygame.sprite.Sprite):
         # draw bullets based on the remaining ammo
         for i in range(remainingAmmo):
             # calculate the row and column of the bullet
+
+            # first, we divide the index by the number of bullets per row
             row = i // self.bulletsPerRow
+
+            # then we get the remainder of the division for the column index
             col = i % self.bulletsPerRow
 
             # calculate the x and y position of the bullet

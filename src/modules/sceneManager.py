@@ -69,7 +69,7 @@ def showStartScreen(screen):
         image.fill(color, special_flags=pygame.BLEND_RGB_MULT)
         boxieImages.append(image)
 
-    mouseIcon = pygame.image.load("src/art/icons/mouse.gif")
+    mouseIcon = pygame.image.load("src/art/icons/mouse.gif").convert_alpha()
     mouseIcon = pygame.transform.scale(mouseIcon, (64, 64))
     
     controllerIcon = pygame.image.load("src/art/icons/controller.gif").convert_alpha()
@@ -126,9 +126,10 @@ def showStartScreen(screen):
 
         currentJoystickCount = pygame.joystick.get_count()
 
-        if currentJoystickCount != len(joysticks):  # if joystick count changed from the og one
+        # if joystick count changed from the og one
+        if currentJoystickCount != len(joysticks):  
             joysticks = []
-            playerActive = [True, False, False]  # Reset playerActive (Mouse remains active)
+            playerActive = [True, False, False]
 
             # reinitialize joysticks
             for i in range(currentJoystickCount):
@@ -140,7 +141,7 @@ def showStartScreen(screen):
 
         # color changing script
         for i in range(len(joysticks)):
-            if playerActive[i + 1]:  # ensure the player is active
+            if playerActive[i + 1]: 
                 # pull the specific joystick to not change other user colors
                 joystick = joysticks[i]
                 
@@ -187,7 +188,7 @@ def showStartScreen(screen):
 
             # place controller icons below the boxies
             iconX = boxes[i].centerx - controllerIcon.get_width() // 2
-            iconY = boxes[i].bottom + 20  # adjusted position for better visibility
+            iconY = boxes[i].bottom + 20
             screen.blit(controllerIcon, (iconX, iconY))
 
         pygame.display.flip()
@@ -287,8 +288,6 @@ def showAbilityCardScreen(screen, players, availableCards, selectFx):
                             if playerY <= cursorY <= playerY + cardHeight:
                                 # add the selected card to Player 1 and remove it from the list
                                 playerSelections[0] = playerCards[0][j]
-                                # play the select sound
-                                # remove the card from the list
                                 playerCards[0].pop(1 - j)
                                 playerSelectionsConfirmed += 1
                                 selectFx.play()
@@ -308,16 +307,11 @@ def showAbilityCardScreen(screen, players, availableCards, selectFx):
                             playerCards[i].pop(1)
                             playerSelectionsConfirmed += 1
 
-                            # play the select sound
-                            
-
                         elif joystick.get_button(1):
                             selectFx.play()
                             playerSelections[i] = playerCards[i][1]
                             playerCards[i].pop(0)
                             playerSelectionsConfirmed += 1
-
-                            # play the select sound
                             
 
         if playerSelectionsConfirmed == len(players):

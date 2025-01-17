@@ -511,4 +511,3 @@ class ShieldBubble(Entity):
         self.Health -= damage  # deal damage to the shield   
         if self.Health <= 0:
             self.kill()
-

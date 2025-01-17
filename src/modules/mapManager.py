@@ -162,4 +162,3 @@ class StaticMapObject(MapObject):
             Updates the object against the base class
         """
         MapObject.update(self)
-        

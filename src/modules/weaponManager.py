@@ -140,7 +140,6 @@ class WeaponBase(pygame.sprite.Sprite):
             Updates the weapon's position and rotation
         """
         self.rect.center = (self.weaponX, self.weaponY)
-        self.window.blit(self.image, self.rect)
 
         # update the bullets
         self.bulletList.update()
@@ -356,8 +355,6 @@ class Bullet(entities.Entity):
                         utils.shootBulletsAllDirections(self, bulletList, 25, 4, 35)
                         self.kill()
                         return
-                else:
-                    print("exploading bullets on cooldown")
 
             # check if it his the player shield bubble
             if player.shieldBubble:

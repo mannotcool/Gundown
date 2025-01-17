@@ -4,6 +4,7 @@
     Description: Houses all the ability cards for the player to select, and their modifiers
 """
 
+# I - Import & Initialize
 import pygame
 from . import weaponManager
 
@@ -86,15 +87,16 @@ class Modifier(pygame.sprite.Sprite):
             # kill player weapon current weapon and give them an assault rifle
             player.weapon.kill()
             player.weapon = weaponManager.AssaultRifle(player.screen, player)
-            player.weapon.update()  # ensure the new weapon's image shows up
+            # ensure the new weapon's image shows up
+            player.weapon.update()  
         elif self.modifierType == "deagle":
             player.weapon.kill()
             player.weapon = weaponManager.DesertEagle(player.screen, player)
-            player.weapon.update()  # ensure the new weapon's image shows up
+            player.weapon.update() 
         elif self.modifierType == "SMG":
             player.weapon.kill()
             player.weapon = weaponManager.SMG(player.screen, player)
-            player.weapon.update()  # ensure the new weapon's image shows up
+            player.weapon.update()
         elif self.modifierType == "explosive":
             player.exploadingBullets = True
 

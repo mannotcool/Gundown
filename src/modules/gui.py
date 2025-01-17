@@ -150,7 +150,10 @@ class ScoreKeeper(pygame.sprite.Sprite):
         # draw the squares based on the score
         for i in range(self.numSquares):
             # if the index is less than the score, draw a large square
-            size = self.largeSize if i < self.score else self.squareSize
+            if i < self.score:
+                size = self.largeSize
+            else:
+                size = self.squareSize
 
             # calculate the x and y position of the square
             x = i * (self.largeSize + self.spacing)

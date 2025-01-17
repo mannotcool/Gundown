@@ -261,6 +261,7 @@ def main():
             physicsObject.runtimeGravity(mapSprites)
 
         # Refresh screen
+        allSprites.clear(screen, background)
         screen.blit(background, (0, 0))  # Redraw the full background first
         allSprites.update()              # Update all sprites
         allSprites.draw(screen)          # Draw all sprites

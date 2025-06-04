@@ -1,35 +1,15 @@
-"""
-    Author: Nick S
-    Date: January 16th, 2025
-    Description: Gundown shooter game, version 1.0.0
-"""
+# I - Import
+import pygame
+import sys
+
+from src.modules import character_sprites
 
 """
 GENERAL NOTES:
 
 - The player supports both mouse and controller input
-- The player can have a shield bubble that absorbs damage, use bumpers, down joystick or e
-- Game requires 2 people to play minimum, or you won't get past the start screen (3 player max)
-- Game locks your mouse in game window, use escape to kill the game
-
-=+=
-KEYBOARD CONTROLS:
-Movement: WASD
-Shoot: Left Mouse Button
-Reload: R
-Shield: E
-Latch: Q
-
-CONTROLLER CONTROLS:
-Movement: Left Joystick
-Look Around: Right Joystick
-Shoot: Right Trigger
-Reload: X
-Shield: Bumpers or down joystick
-Latch: Left Trigger
-
-!! ENSURE LOGITECH CONTROLLER IS IN XINPUT MODE !!
-=+=
+- Shooting is with space
+- Jumping is with w
 
 Controller Button Mapping (xbox one):
 a - 0
@@ -43,130 +23,69 @@ right bumper - 10
 axis 5 - right trigger
 axis 4 - left trigger
 
-Controller Button Mapping (logitech):
-x = 0
-a = 1
-y = 3
-b = 2
 
-left bumper - 5
-right bumper - 4
+pastel color palette:
+red: (255,179,186)
+orange: (255,223,186)
+yellow: (255,255,186)
+green: (186,255,201)
+blue: (186,225,255)
+purple: (227,218,255)
 
-button 7 - right trigger
-button 6 - left trigger
 
 """
 
-# I - Import & Initialize
-import pygame
+version = "0.3.1.1"
 
-pygame.init()
-pygame.mixer.init()
-pygame.font.init()
-
-from src.modules import entities, utils, gui, abilityCards, weaponManager, sceneManager
-from src.maps import mapA
-
-VERSION = "1.0"
-
-# enables certain console logs, turns off background music
-DEBUG = False
+# enables text debug on screen
+debug = True
 
 def main():
-    """
-        Description:
-        Main runtime game loop for Gundown
-
-        Args:
-        None
-
-        Returns:
-        None
-    """
-
+    # I - Initialize
+    pygame.init()
+    
     # D - Display configuration
     screen = pygame.display.set_mode((1280, 720))
-    pygame.display.set_caption("Gundown - " + VERSION + " - Debug: " + str(DEBUG))
-
-    # E - Entities
-
-    if DEBUG == False:
-        pygame.mixer.music.load("src/music/pizzatronMusic.ogg")
-        pygame.mixer.music.set_volume(0.3)
-        pygame.mixer.music.play(-1)
-
-    # Scene Manager houses the start screen, and ability card screen. This will return an array with the colors of the players
-    selectedPlayerColors = sceneManager.showStartScreen(screen)
+    pygame.display.set_caption("Gundown - " + version + " - Debug: " + str(debug))
     
-    # Used to store the dead players, will be used to detect when 1 player is alive and call for the new ability cards
-    deadPlayers = []
-    disableRespawns = False
-    gameEnd = None
-
+    # E - Entities (just background for now)
     # make background space.gif in art
-    background = pygame.image.load("src/art/backgrounds/dark_background.gif")
+    background = pygame.image.load("src/art/space.gif")
+
+
     screen.blit(background, (0,0))
 
-    # load sounds effects
-    bellFx = pygame.mixer.Sound("src/sounds/bell.ogg")
-    bellFx.set_volume(0.5)
+    # create 4 walls that surround the screen
+    top_wall = character_sprites.StaticMapObject(screen, 0, 0, 1280, 10, (255, 255, 255))
+    left_wall = character_sprites.StaticMapObject(screen, 0, 0, 10, 720, (255, 255, 255))
+    right_wall = character_sprites.StaticMapObject(screen, 1270, 0, 10, 720, (255, 255, 255))
 
-    selectFx = pygame.mixer.Sound("src/sounds/select_2.ogg")
-    selectFx.set_volume(0.7)
+    # latching testing wall 
+    climable_wall = character_sprites.StaticMapObject(screen, 1260, 560, 10, 120, (200, 0, 200), "solid", True)
 
-    shieldFx = pygame.mixer.Sound('src/sounds/cast_shield.ogg')
-    shieldFx.set_volume(0.5)
+    # extra platform
+    platform = character_sprites.StaticMapObject(screen, 500, 600, 300, 20, (255, 255, 255))
 
-    shotFx = pygame.mixer.Sound('src/sounds/shot.ogg')
-    shotFx.set_volume(0.35)
+    floor = character_sprites.StaticMapObject(screen, 0, 710, 1280, 10, (255, 255, 255))
 
-    reloadFx = pygame.mixer.Sound('src/sounds/reload_gun.ogg')
-    reloadFx.set_volume(0.8)
+    # add a small 1/3rd green wall that is just bouncing around
+    bounce_demo_wall = character_sprites.StaticMapObject(screen, 700, 10, 300, 10, (0, 255, 0), "bounce")
 
-    # change mouse cursor to a crosshair
-    pygame.mouse.set_visible(False)
-    crosshair = pygame.image.load("src/art/hud/cross/crosshair_320.png").convert_alpha()
-
-    # add transparency to the crosshair & scale down
-    crosshair.set_colorkey((0, 0, 0))
-    crosshair = pygame.transform.scale(crosshair, (32, 32))
-
-    # Map A || Returns an array with the map sprites [0] and physics objects [1]
-    importedMap = mapA.MapA(screen)
+    # add a box with physics
+    box = character_sprites.StaticMapObject(screen, 500, 500, 50, 50, (255, 0, 0), "solid", False, True, 2)
 
     # create a sprite group for all physics objects
-    mapSprites = importedMap[0]
-    physicsObjects = importedMap[1]
-    
-    # PLAYERS:
+    physicsObjects = pygame.sprite.Group(box) 
+    mapSprites = pygame.sprite.Group(top_wall, left_wall, floor, platform, right_wall, bounce_demo_wall, climable_wall, physicsObjects)
 
-    # create the players with the colors selected
     players = pygame.sprite.Group()
+    # create a player sprite object from our mySprites module
+    players.add(character_sprites.Player(screen, 100, 100, "mouse", character_sprites.Colors.purple))
 
-    # create a player sprite object from our mySprites module. p1 is always mouse
-    players.add(entities.Player(screen, 100, 100, "mouse", selectedPlayerColors[0], None))
-    
-    # pick up all game controllers that exist and create a player for each one
-    # check if there is a controller available
-    joystick_count = pygame.joystick.get_count()
-    if joystick_count > 0:
-        for i in range(joystick_count):
-            players.add(entities.Player(screen, 100, 100, "controller", selectedPlayerColors[i + 1], pygame.joystick.Joystick(i)))
 
-    # attach pistols onto all the players using attachWeapon
-    for player in players:
-        player.attachWeapon(weaponManager.BasicPistol(screen, player))
-
-    # now respawn them at the correct positions
-    utils.generalizedRespawn(players)
-
-    # for every player, create a scorekeeper object. its a 3 square bar top left corner with small rects for no points and scaled squares for points
-    scoreKeepers = pygame.sprite.Group()
-    for player in players:
-        scoreKeepers.add(gui.ScoreKeeper(screen, player, (20, 10 + 40 * players.sprites().index(player))))
 
     # add all sprites include the player, weapon, bullets, and map sprites to the allSprites group
-    allSprites = pygame.sprite.OrderedUpdates(mapSprites, players, scoreKeepers)
+    allSprites = pygame.sprite.OrderedUpdates(players, mapSprites)
 
     # for each player, append their weapon to the allSprites group
     for player in players:
@@ -178,65 +97,43 @@ def main():
     clock = pygame.time.Clock()
     keepGoing = True
 
-    # bell + lock your mouse
-    bellFx.play()
-    pygame.event.set_grab(True)
-
     # L - Loop
     while keepGoing:
         # T - Timer to set frame rate
         clock.tick(60) 
 
+        
+    
         # E - Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 keepGoing = False
 
-            # if the player presses the escape key, quit the game
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    keepGoing = False
-        
-        # scan to see if a controller is newly ocnnected 
+        # if the L button is pressed, add 1 more player for a max of 2 players
+        if pygame.key.get_pressed()[pygame.K_l] and len(players) < 2:
+            players.add(character_sprites.Player(screen, 100, 100, "controller", (255, 255, 0)))
+            allSprites.add(players)
+            # add the new player's weapon to the allSprites group
+            for player in players:
+                # check if the players weapon is already in the allSprites group
+                if player.weapon not in allSprites:
+                    allSprites.add(player.weapon)
+
+        # scan to see if a controller is detected and switch to controller if so 
         joystick_count = pygame.joystick.get_count()
 
         for player in players:
-            if player.isDead and player not in deadPlayers:
-                deadPlayers.append(player)
-
-             # check if all players are dead except for 1, and see if the 1 dead player has 3 score
-            if player.score == 3:
-                if player not in deadPlayers:
-                    disableRespawns = True
-
-                    # this is my super smart way of passing over the color of the player to the font
-                    gameEnd = player.colorScheme
-
-            # if all players are dead except for 1, show the ability card screen
-            if len(deadPlayers) == (len(players) - 1):
-                if disableRespawns == False:
-                    pygame.event.set_grab(False)
-                    deadPlayers = utils.deathHandler(deadPlayers, players, sceneManager, screen, allSprites, abilityCards, selectFx)
-                    pygame.event.set_grab(True)
-
-                    bellFx.play()
-                    if DEBUG:
-                        print("Respawning players...")
-                else:
-                    if DEBUG:
-                        print("Game over")
-                
-    
             # gravity logic
             player.runTimeGravityManager(mapSprites)
 
+            # check if player is controller or mouse
             if player.controlScheme == "controller":
-                # if joystick is not none, initalize it and run the movement
-                if player.joyStick != None:
-                    player.joyStick.init()
-                    player.runTimeJoyMovement(player.joyStick, mapSprites, shotFx, reloadFx, shieldFx)
+                    if joystick_count > 0:
+                        joystick = pygame.joystick.Joystick(0)
+                        joystick.init()
+                        player.runTimeJoyMovement(joystick, mapSprites)
             else:
-                player.runTimeMnkMovement(mapSprites, shotFx, reloadFx, shieldFx)
+                player.runTimeMnkMovement(mapSprites)
 
             # if the player has a shieldBuble, draw it
             if player.shieldBubble != None:
@@ -244,46 +141,111 @@ def main():
                 
             # allow bullets to have collision with walls
             for bullet in player.weapon.bulletList:
-                bullet.collisionDetection(mapSprites, players, player.weapon.bulletList)
-    
-            if player.Health <= 0:
-                player.isDead = True
+                bullet.collisionDetection(mapSprites, players)
 
-            # the reload complete method checks if the reload time has passed and if so, sets the ammo back to the max
-            player.weapon.checkReloadComplete()
-            allSprites.add(player.weapon.bulletList)
+        # put ammo count as black text top right
+        font = pygame.font.SysFont("Arial", 16)
 
-            # allows for reloading of the weapon
-            player.update()
+        
+        
+        if debug:
+            # make it so its based on how many players there are and put it into list
+            p1Name = font.render("Player 1", True, (150, 0, 0))
+            p1AmmoText = font.render("Ammo: " + str(players.sprites()[0].weapon.ammo), True, (255, 255, 255))
+            p1TextX = font.render("Player X: " + str(players.sprites()[0].rect.x), True, (255, 255, 255))
+            p1TextY = font.render("Player Y: " + str(players.sprites()[0].rect.y), True, (255, 255, 255))
+            p1TextDirection = font.render("Direction: " + str(players.sprites()[0].direction), True, (255, 255, 255))
+            p1TextGunType = font.render("Gun Type: " + str(players.sprites()[0].weapon.weaponName), True, (255, 255, 255))
+            p1TextHealth = font.render("Health: " + str(players.sprites()[0].Health), True, (255, 255, 255))
+            p1TextIsReloading = font.render("Is Reloading: " + str(players.sprites()[0].weapon.isReloading), True, (255, 255, 255))
+            p1TextCanLatch = font.render("Can Latch: " + str(players.sprites()[0].canLatch), True, (255, 255, 255))
+            p1TextIsLatched = font.render("Is Latched: " + str(players.sprites()[0].latching), True, (255, 255, 255))
+
+            # if there is a second player, add the debug text for player 2
+            if len(players) > 1:
+                p2Name = font.render("Player 2", True, (0, 0, 150))
+                p2AmmoText = font.render("Ammo: " + str(players.sprites()[1].weapon.ammo), True, (255, 255, 255))
+                p2TextX = font.render("Player X: " + str(players.sprites()[1].rect.x), True, (255, 255, 255))
+                p2TextY = font.render("Player Y: " + str(players.sprites()[1].rect.y), True, (255, 255, 255))
+                p2TextDirection = font.render("Direction: " + str(players.sprites()[1].direction), True, (255, 255, 255))
+                p2TextGunType = font.render("Gun Type: " + str(players.sprites()[1].weapon.weaponName), True, (255, 255, 255))
+                p2TextHealth = font.render("Health: " + str(players.sprites()[1].Health), True, (255, 255, 255))
+                p2TextIsReloading = font.render("Is Reloading: " + str(players.sprites()[1].weapon.isReloading), True, (255, 255, 255))
+                p2TextCanLatch = font.render("Can Latch: " + str(players.sprites()[1].canLatch), True, (255, 255, 255))
+                p2TextIsLatched = font.render("Is Latched: " + str(players.sprites()[1].latching), True, (255, 255, 255))
+                
+        
+        # make bold green or red text depending on if control scheme is controller or mouse and give it a bit more space "Using Controller" "Using MnK"
+        if player.controlScheme == "controller":
+            p1TextControlScheme = font.render("Using Controller", True, (0, 255, 0))
+            if len(players) > 1:
+                p2TextControlScheme = font.render("Using Controller", True, (0, 255, 0))
+        else:
+            p1TextControlScheme = font.render("Using MnK", True, (255, 0, 0))
+            if len(players) > 1:
+                p2TextControlScheme = font.render("Using MnK", True, (255, 0, 0))
 
         # for every physics object, call their internal function: runtimeGravity
         for physicsObject in physicsObjects:
             physicsObject.runtimeGravity(mapSprites)
 
+
+        for player in players:
+            # check if player is dead
+            if player.Health <= 0:
+                player.kill()
+                # kill the gun
+                player.weapon.kill()
+                print("Player is dead")
+
+            # the reload complete method checks if the reload time has passed and if so, sets the ammo back to the max
+            player.weapon.checkReloadComplete()
+            
+            # allways add new bullets to the allSprites group
+            allSprites.add(player.weapon.bulletList)
+
+            # allows for reloading of the weapon
+            player.update()
+            player.weapon.update()
+
         # Refresh screen
-        allSprites.clear(screen, background)
         screen.blit(background, (0, 0))  # Redraw the full background first
+
+        # draw the debug text
+        if debug:
+            screen.blit(p1Name, (1000, 20))
+            screen.blit(p1AmmoText, (1000, 40))
+            screen.blit(p1TextX, (1000, 60))
+            screen.blit(p1TextY, (1000, 80))
+            screen.blit(p1TextDirection, (1000, 100))
+            screen.blit(p1TextGunType, (1000, 120))
+            screen.blit(p1TextHealth, (1000, 140))
+            screen.blit(p1TextIsReloading, (1000, 160))
+            screen.blit(p1TextControlScheme, (1000, 180))
+            screen.blit(p1TextCanLatch, (1000, 200))
+            screen.blit(p1TextIsLatched, (1000, 220))
+
+            if len(players) > 1:
+                # same height other side of screen
+                screen.blit(p2Name, (20, 20))
+                screen.blit(p2AmmoText, (20, 40))
+                screen.blit(p2TextX, (20, 60))
+                screen.blit(p2TextY, (20, 80))
+                screen.blit(p2TextDirection, (20, 100))
+                screen.blit(p2TextGunType, (20, 120))
+                screen.blit(p2TextHealth, (20, 140))
+                screen.blit(p2TextIsReloading, (20, 160))
+                screen.blit(p2TextCanLatch, (20, 200))
+                screen.blit(p2TextIsLatched, (20, 220))
+                screen.blit(p2TextControlScheme, (20, 180))
+
+
         allSprites.update()              # Update all sprites
+        
         allSprites.draw(screen)          # Draw all sprites
-
-        # if gameEnd not nothing (if gameend, would be a color), show the game over screen
-        if gameEnd is not None:
-            pixelArtFont = pygame.font.Font("src/fonts/ThaleahFat.ttf", 96)
-            screen.blit(pixelArtFont.render("Game Over!", True, gameEnd), (560, 10))
-
-        screen.blit(crosshair, pygame.mouse.get_pos()) # draw the crosshair on top of everything
         pygame.display.flip()            # Flip the display
     
+    # Close the game window
     pygame.quit()
-
-# using raw text string to print askii art
-print(r"""   ______                    ______                                 
- .' ___  |                  |_   _ `.                               
-/ .'   \_| __   _   _ .--.    | | `. \  .--.   _   _   __  _ .--.   
-| |   ____[  | | | [ `.-. |   | |  | |/ .'`\ \[ \ [ \ [  ][ `.-. |  
-\ `.___]  || \_/ |, | | | |  _| |_.' /| \__. | \ \/\ \/ /  | | | |  
- `._____.' '.__.'_/[___||__]|______.'  '.__.'   \__/\__/  [___||__] 
-                                                                    """)
-print("Gundown by Nick S - " + VERSION + " - Debug: " + str(DEBUG))
 
 main()

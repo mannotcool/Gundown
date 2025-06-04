@@ -1,9 +1,0 @@
-Sound effects:
-- Shield Bubble Being Deployed
-- Gun Firing
-- Shot hitting
-- Buzzer for new screen kinda thing
-- Clicking Noise for when someone selects something
-
-Battle Music:
-- Pizzatron 3000 music is top tier

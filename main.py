@@ -152,7 +152,7 @@ def main():
     if joystick_count > 0:
         for i in range(joystick_count):
             players.add(entities.Player(screen, 100, 100, "controller", selectedPlayerColors[i + 1], pygame.joystick.Joystick(i)))
-    
+
     # attach pistols onto all the players using attachWeapon
     for player in players:
         player.attachWeapon(weaponManager.BasicPistol(screen, player))
